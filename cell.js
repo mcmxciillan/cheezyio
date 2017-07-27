@@ -283,7 +283,7 @@ CellController.prototype.applyPlayerOps = function (playerIds, players, coins) {
         player.direction = 'left';
         movedHorizontally = true;
       }
-      if (playerOp.s === 1 /*&& player.score > 0*/) {
+      if (playerOp.s === 1 && player.score > 0) {
         switch (player.direction) {
           case 'up':
           movementVector.y = -(moveSpeed * 2);
@@ -301,7 +301,7 @@ CellController.prototype.applyPlayerOps = function (playerIds, players, coins) {
           movementVector.x = -(moveSpeed * 2);
           break;
         }
-        //player.score -= 1;
+        player.score -= 1;
       }
 
       if (movedHorizontally && movedVertically) {
@@ -420,7 +420,7 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
     if (playerOp) {
 
       console.log(playerOp);
-      if (playerOp.s == 1){
+      if (playerOp.s == 1 && player.score > 1){
         if(otherPlayer.subtype == 'bot'){
           player.score += otherPlayer.score;
           this.botManager.removeBot(otherPlayer);

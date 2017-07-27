@@ -58,25 +58,25 @@ module.exports = {
   COIN_TYPES: [
     {
       type: 4,
-      value: 1,
+      value: 5,
       radius: 10,
       probability: 0.25
     },
     {
       type: 3,
-      value: 2,
+      value: 10,
       radius: 10,
       probability: 0.6
     },
     {
       type: 2,
-      value: 6,
+      value: 15,
       radius: 10,
       probability: 0.1
     },
     {
       type: 1,
-      value: 12,
+      value: 20,
       radius: 10,
       probability: 0.05
     }
