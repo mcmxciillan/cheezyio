@@ -421,9 +421,14 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
 
       console.log(playerOp);
       if (playerOp.s == 1){
-        console.log(otherPlayer);
-
-        console.log("Dead");
+        if(otherPlayer.subtype == 'bot'){
+          player.score += otherPlayer.score;
+          this.botManager.removeBot(otherPlayer);
+          console.log(otherPlayer.score + " has been added to your score!");
+          console.log(player.score + " is your new score");
+          console.log("This is you " + player);
+          console.log("Bot killed!");
+        }
       }
     }
     //console.log(playerOp);

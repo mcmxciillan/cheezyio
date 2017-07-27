@@ -23,13 +23,18 @@
     </style>
   </head>
   <body>
+    <!--<h1>Cheese.io</h1>
+
+    <input type="button" onclick="getCheese()">Play</input>-->
     <script type="text/javascript">
 
       var socket = socketCluster.connect({
         codecEngine: scCodecMinBin
       });
 
-      window.onload = function () {
+      //var cellController = require('./cell').CellController;
+
+      window.onload = function() {
 
         //  Note that this html file is set to pull down Phaser from our public/ directory.
         //  Although it will work fine with this tutorial, it's almost certainly not the most current version.
