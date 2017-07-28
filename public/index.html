@@ -261,7 +261,7 @@
             });
             user.texturePrefix = 'others';
           }
-
+console.log("Hey");
           user.score = userData.score;
           user.sprite = sprite;
 
@@ -308,6 +308,7 @@
             moveUser(userData.id, userData.x, userData.y);
           } else {
             createUserSprite(userData);
+            console.log(userData);
           }
         }
 

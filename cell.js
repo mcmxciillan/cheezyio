@@ -50,6 +50,7 @@ var SAT = require('sat');
 var config = require('./config');
 var BotManager = require('./bot-manager').BotManager;
 var CoinManager = require('./coin-manager').CoinManager;
+var UserManager = require('./user-manager').UserManager;
 
 // This controller will be instantiated once for each
 // cell in our world grid.
@@ -91,6 +92,8 @@ var CellController = function (options, util) {
   if (!cellData.player) {
     cellData.player = {};
   }
+
+  this.userManager = new UserManager(cellData.player);
 
   for (var b = 0; b < this.botCount; b++) {
     var bot = this.botManager.addBot();
@@ -424,10 +427,11 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
         if(otherPlayer.subtype == 'bot'){
           player.score += otherPlayer.score;
           this.botManager.removeBot(otherPlayer);
-          console.log(otherPlayer.score + " has been added to your score!");
-          console.log(player.score + " is your new score");
-          console.log("This is you " + player);
-          console.log("Bot killed!");
+          console.log(otherPlayer);
+        } else {
+          console.log("You hit " + otherPlayer.id);
+          this.userManager.removeUser(otherPlayer);
+          console.log("Killed");
         }
       }
     }
