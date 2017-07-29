@@ -261,7 +261,6 @@
             });
             user.texturePrefix = 'others';
           }
-console.log("Hey");
           user.score = userData.score;
           user.sprite = sprite;
 
@@ -306,10 +305,13 @@ console.log("Hey");
             user.score = userData.score;
             user.direction = userData.direction;
             moveUser(userData.id, userData.x, userData.y);
+
+            // game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
           } else {
             createUserSprite(userData);
             console.log(userData);
           }
+
         }
 
         function removeCoin(coinData) {
@@ -341,13 +343,27 @@ console.log("Hey");
           game.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
           // Generate a random name for the user.
-          var playerName = 'user-' + Math.round(Math.random() * 10000);
+          var playerName = 'Cheese.io ' + Math.round(Math.random() * 10000);
+
+          // function resetUser(user){
+          //   socket.emit('reset', user);
+          // }
 
           function joinWorld() {
             socket.emit('join', {
               name: playerName,
             }, function (err, playerData) {
               playerId = playerData.id;
+              updateCellWatchers(playerData, 'cell-data', handleCellData);
+            });
+          }
+
+          function reJoinWorld(player) {
+            socket.emit('rejoin', {
+              name: player.name,
+            }, function (err, playerData) {
+              playerId = playerData.id;
+              player.killed = false;
               updateCellWatchers(playerData, 'cell-data', handleCellData);
             });
           }
@@ -362,6 +378,10 @@ console.log("Hey");
 
           if (socket.state == 'open') {
             joinWorld();
+          }
+          console.log("your socket is: " + socket.player);
+          if (socket.killed){
+            rejoinWorld(socket.player);
           }
           // For reconnect
           socket.on('connect', joinWorld);

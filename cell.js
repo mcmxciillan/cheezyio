@@ -421,18 +421,15 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
   var playerOp = player.op;
   if (result.collided) {
     if (playerOp) {
-
-      console.log(playerOp);
       if (playerOp.s == 1 && player.score > 1){
         if(otherPlayer.subtype == 'bot'){
-          player.score += otherPlayer.score;
           this.botManager.removeBot(otherPlayer);
-          console.log(otherPlayer);
+          player.score += otherPlayer.score;
+          console.log("Scored on bot");
         } else {
-          console.log("You hit " + otherPlayer.id);
-          this.userManager.removeUser(otherPlayer);
-          console.log("Killed");
+          this.userManager.addPoints(player, otherPlayer);
         }
+
       }
     }
     //console.log(playerOp);

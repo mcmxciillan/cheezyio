@@ -571,6 +571,10 @@ module.exports.run = function (worker) {
       var type = state.type;
       var id = state.id;
 
+      if(type == 'dead'){
+
+      }
+
       if (!currentCellData[type]) {
         currentCellData[type] = {};
       }
@@ -717,10 +721,33 @@ module.exports.run = function (worker) {
         y: startingPos.y,
         diam: PLAYER_DIAMETER,
         mass: PLAYER_MASS,
-        score: 0
+        score: 0,
+        killed: false
       };
 
       socket.player = stateManager.create(player);
+
+      respond(null, player);
+    });
+
+
+
+    socket.on('rejoin', function (playerOptions, respond) {
+      var newPosition = getRandomPosition(PLAYER_DIAMETER, PLAYER_DIAMETER);
+      var player = {
+        id: playerOptions.id,
+        type: playerOptions.type,
+        swid: playerOptions.swid,
+        name: playerOptions.name,
+        x: newPosition.x,
+        y: newPosition.y,
+        diam: PLAYER_DIAMETER,
+        mass: PLAYER_MASS,
+        score: 0,
+        killed: false
+      };
+
+      socket.player = stateManager.reCreate(player);
 
       respond(null, player);
     });
