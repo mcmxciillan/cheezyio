@@ -17,11 +17,18 @@ var UserManager = function(userData){
 //   //console.log("User spawned at X: " + user.x + " Y: " + user.y );
 // };
 
-UserManager.prototype.addPoints = function(user, killedUser) {
-  killedUser.killed = true;
-  user.score += killedUser.score;
-  //console.log("Added " + killedUser.score + " to your score.");
-  killedUser.score = 0;
+UserManager.prototype.attackUser = function(user, killedUser) {
+
+    killedUser.killed = true;
+    user.score += killedUser.score;
+    killedUser.score = 0;
+    console.log("Victim " + killedUser.name + " is killed: " + killedUser.killed);
+    console.log("Winner is " + user.name + " Killed?: " + user.killed);
+    // killedUser.delete = 1;
 };
+
+// UserManager.prototype.removeUser = function (user) {
+//   user.delete = 1;
+// };
 
 module.exports.UserManager = UserManager;

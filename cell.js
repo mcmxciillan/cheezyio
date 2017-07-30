@@ -427,7 +427,11 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
           player.score += otherPlayer.score;
           console.log("Scored on bot");
         } else {
-          this.userManager.addPoints(player, otherPlayer);
+          console.log("Scored on human");
+          this.userManager.attackUser(player, otherPlayer);
+          // if (otherPlayer.killed) {
+          //   this.userManager.removeUser(otherPlayer);
+          // }
         }
 
       }

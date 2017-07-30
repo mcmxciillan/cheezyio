@@ -306,6 +306,10 @@
             user.direction = userData.direction;
             moveUser(userData.id, userData.x, userData.y);
 
+            if (userData.killed){
+              socket.emit('rejoin', userData);
+            }
+
             // game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
           } else {
             createUserSprite(userData);
@@ -380,9 +384,7 @@
             joinWorld();
           }
           console.log("your socket is: " + socket.player);
-          if (socket.killed){
-            rejoinWorld(socket.player);
-          }
+
           // For reconnect
           socket.on('connect', joinWorld);
           socket.on('disconnect', removeAllUserSprites);
@@ -428,6 +430,13 @@
             // Send the player operations for the server to process.
             socket.emit('action', playerOp);
           }
+
+          if (socket.player){
+            if (player.killed){
+              rejoinWorld(socket.player);
+            }
+          }
+          //socket.on('respawn', )
         }
 
         function render() {

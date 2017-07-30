@@ -29,7 +29,7 @@ StateManager.prototype.delete = function (stateRef) {
 };
 
 StateManager.prototype.reCreate = function (state) {
-  var stateCellIndec = this.channelGrid.getCellIndex(state);
+  var stateCellIndex = this.channelGrid.getCellIndex(state);
   var stateRef = {
     id: state.id,
     tcid: stateCellIndex, // Target cell index.
@@ -40,7 +40,6 @@ StateManager.prototype.reCreate = function (state) {
     stateRef.swid = state.swid;
   }
   this.stateRefs[state.id] = stateRef;
-  console.log("Recreated " + stateRef);
   return stateRef;
 };
 
