@@ -1,1 +1,1 @@
-<h1>Cheesey.io</h1>
+<h1>Cheesy.io</h1>
