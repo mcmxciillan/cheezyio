@@ -77,6 +77,7 @@ BotManager.prototype.addBot = function (options) {
 };
 
 BotManager.prototype.removeBot = function (bot) {
+  bot.killed = true;
   bot.delete = 1;
 };
 

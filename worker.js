@@ -52,7 +52,7 @@ function getRandomPosition(spriteWidth, spriteHeight) {
 }
 
 module.exports.run = function (worker) {
-  console.log('   >> Worker PID:', process.pid);
+  //console.log('   >> Worker PID:', process.pid);
 
   // We use a codec for SC to compress messages between clients and the server
   // to a lightweight binary format to reduce bandwidth consumption.
@@ -613,9 +613,10 @@ module.exports.run = function (worker) {
       if (!currentCellData[type]) {
         currentCellData[type] = {};
       }
-
-      if (stateRef.delete == 1){
-        console.log("YEs it deletes!")
+console.log(stateRef);
+      if (stateRef.type == 'player'){
+        console.log("This is a player");
+        console.log(stateRef);
       }
 
       if (!currentCellData[type][id]) {
@@ -735,7 +736,7 @@ module.exports.run = function (worker) {
     });
 
     socket.on('rejoin', function (playerOptions, respond) {
-      console.log("Rejoining " + playerOptions);
+    //  console.log("Rejoining " + playerOptions);
       var newPosition = getRandomPosition(PLAYER_DIAMETER, PLAYER_DIAMETER);
       var player = {
         id: playerOptions.id,
@@ -749,7 +750,7 @@ module.exports.run = function (worker) {
         score: 0,
         killed: false
       };
-
+      stateManager.delete(socket.player);
       socket.player = stateManager.create(player);
 
       respond(null, player);

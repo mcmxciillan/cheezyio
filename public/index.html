@@ -42,7 +42,7 @@
         //  Although it will work fine with this tutorial, it's almost certainly not the most current version.
         //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
 
-        var game, playerId, player;
+        var game, playerId, player, maxScore = 0;
         users = {};
         coins = {};
 
@@ -309,7 +309,7 @@
             // game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
           } else {
             createUserSprite(userData);
-            console.log(userData);
+            //console.log(userData);
           }
 
         }
@@ -377,10 +377,8 @@
           }
 
           if (socket.state == 'open') {
-
             joinWorld();
           }
-
 
           // For reconnect
           socket.on('connect', joinWorld);
@@ -427,6 +425,7 @@
             // Send the player operations for the server to process.
             socket.emit('action', playerOp);
           }
+
         }
 
         function render() {
@@ -436,16 +435,17 @@
             game.debug.text('FPS:   ' + game.time.fps, 2, 14, "#00FF00");
             if (player) {
               game.debug.text('Score: ' + player.score, 2, 30, "#00FF00");
+              game.debug.text('King: ' +player.name + " " + maxScore, 2, 45, '#00FF00');
             }
           }
 
           for (var i in users){
             if (users.hasOwnProperty(i)) {
               var curUser = users[i];
-              var maxScore = 0;
               if (curUser.score > maxScore){
                 maxScore = curUser.score;
-                game.debug.text('King: ' + curUser.name, WORLD_WIDTH * .8, 15, '#FFFFFF');
+                game.debug.text('King: ' + curUser.name, 2, 45, '#00FF00');
+                //console.log(curUser.name);
               }
             }
           }
