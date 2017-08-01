@@ -423,17 +423,17 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
     if (playerOp) {
       if (playerOp.s == 1 && player.score > 1){
         if(otherPlayer.subtype == 'bot'){
+        player.score += otherPlayer.score;
           this.botManager.removeBot(otherPlayer);
-          player.score += otherPlayer.score;
           console.log("Scored on bot");
         } else {
           console.log("Scored on human");
-          this.userManager.attackUser(player, otherPlayer);
-          // if (otherPlayer.killed) {
-          //   this.userManager.removeUser(otherPlayer);
-          // }
+          this.deadPlayer = this.userManager.attackUser(player, otherPlayer);
+          if (otherPlayer.killed) {
+            //this.userManager.resetUser(otherPlayer);
+            return true;
+          }
         }
-
       }
     }
     //console.log(playerOp);

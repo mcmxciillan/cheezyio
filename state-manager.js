@@ -28,19 +28,10 @@ StateManager.prototype.delete = function (stateRef) {
   this.stateRefs[stateRef.id].delete = 1;
 };
 
-StateManager.prototype.reCreate = function (state) {
-  var stateCellIndex = this.channelGrid.getCellIndex(state);
-  var stateRef = {
-    id: state.id,
-    tcid: stateCellIndex, // Target cell index.
-    type: state.type,
-    create: state
-  };
-  if (state.swid != null) {
-    stateRef.swid = state.swid;
-  }
-  this.stateRefs[state.id] = stateRef;
-  return stateRef;
+StateManager.prototype.reCreate = function (stateRef) {
+  var newRef = this.stateRefs[stateRef.id];
+  this.stateRefs[stateRef.id].delete = 1;
+  this.create(newRef);
 };
 
 module.exports.StateManager = StateManager;

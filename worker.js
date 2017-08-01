@@ -571,6 +571,10 @@ module.exports.run = function (worker) {
       var type = state.type;
       var id = state.id;
 
+      if(type == 'dead'){
+
+      }
+
       if (!currentCellData[type]) {
         currentCellData[type] = {};
       }
@@ -606,12 +610,12 @@ module.exports.run = function (worker) {
       var id = stateRef.id;
       var type = stateRef.type;
 
-      if (stateRef.killed){
-
-      }
-
       if (!currentCellData[type]) {
         currentCellData[type] = {};
+      }
+
+      if (stateRef.delete == 1){
+        console.log("YEs it deletes!")
       }
 
       if (!currentCellData[type][id]) {
@@ -730,11 +734,9 @@ module.exports.run = function (worker) {
       respond(null, player);
     });
 
-
-
     socket.on('rejoin', function (playerOptions, respond) {
+      console.log("Rejoining " + playerOptions);
       var newPosition = getRandomPosition(PLAYER_DIAMETER, PLAYER_DIAMETER);
-      console.log(playerOptions.id);
       var player = {
         id: playerOptions.id,
         type: playerOptions.type,
@@ -747,15 +749,11 @@ module.exports.run = function (worker) {
         score: 0,
         killed: false
       };
-      console.log(playerOptions.id);
 
-      socket.player = stateManager.reCreate(player);
-
+      socket.player = stateManager.create(player);
 
       respond(null, player);
     });
-
-
 
     socket.on('action', function (playerOp) {
       if (socket.player) {

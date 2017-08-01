@@ -53,7 +53,8 @@ BotManager.prototype.addBot = function (options) {
     mass: options.mass || this.botMass,
     diam: diameter,
     changeDirProb: this.botChangeDirectionProbability,
-    op: {}
+    op: {},
+    killed: false
   };
   if (options.x && options.y) {
     bot.x = options.x;

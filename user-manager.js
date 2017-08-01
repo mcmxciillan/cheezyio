@@ -24,11 +24,11 @@ UserManager.prototype.attackUser = function(user, killedUser) {
     killedUser.score = 0;
     console.log("Victim " + killedUser.name + " is killed: " + killedUser.killed);
     console.log("Winner is " + user.name + " Killed?: " + user.killed);
-    // killedUser.delete = 1;
+    killedUser.delete = 1;
 };
 
-// UserManager.prototype.removeUser = function (user) {
-//   user.delete = 1;
+// UserManager.prototype.resetUser = function (user) {
+//   user.reset = 1;
 // };
 
 module.exports.UserManager = UserManager;

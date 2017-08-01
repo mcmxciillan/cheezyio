@@ -306,10 +306,6 @@
             user.direction = userData.direction;
             moveUser(userData.id, userData.x, userData.y);
 
-            if (userData.killed){
-              socket.emit('rejoin', userData);
-            }
-
             // game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
           } else {
             createUserSprite(userData);
@@ -366,8 +362,8 @@
             socket.emit('rejoin', {
               name: player.name,
             }, function (err, playerData) {
+              removeUser(player);
               playerId = playerData.id;
-              player.killed = false;
               updateCellWatchers(playerData, 'cell-data', handleCellData);
             });
           }
@@ -381,9 +377,10 @@
           }
 
           if (socket.state == 'open') {
+
             joinWorld();
           }
-          console.log("your socket is: " + socket.player);
+
 
           // For reconnect
           socket.on('connect', joinWorld);
@@ -430,13 +427,6 @@
             // Send the player operations for the server to process.
             socket.emit('action', playerOp);
           }
-
-          if (socket.player){
-            if (player.killed){
-              rejoinWorld(socket.player);
-            }
-          }
-          //socket.on('respawn', )
         }
 
         function render() {
@@ -446,6 +436,17 @@
             game.debug.text('FPS:   ' + game.time.fps, 2, 14, "#00FF00");
             if (player) {
               game.debug.text('Score: ' + player.score, 2, 30, "#00FF00");
+            }
+          }
+
+          for (var i in users){
+            if (users.hasOwnProperty(i)) {
+              var curUser = users[i];
+              var maxScore = 0;
+              if (curUser.score > maxScore){
+                maxScore = curUser.score;
+                game.debug.text('King: ' + curUser.name, WORLD_WIDTH * .8, 15, '#FFFFFF');
+              }
             }
           }
 
