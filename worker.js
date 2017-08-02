@@ -613,10 +613,10 @@ module.exports.run = function (worker) {
       if (!currentCellData[type]) {
         currentCellData[type] = {};
       }
-console.log(stateRef);
-      if (stateRef.type == 'player'){
-        console.log("This is a player");
-        console.log(stateRef);
+      if (type.subtype == 'human'){
+        if(stateRef.create.killed){
+          stateManager.reCreate(stateRef);
+        }
       }
 
       if (!currentCellData[type][id]) {
@@ -750,8 +750,7 @@ console.log(stateRef);
         score: 0,
         killed: false
       };
-      stateManager.delete(socket.player);
-      socket.player = stateManager.create(player);
+      socket.player = stateManager.reCreate(player);
 
       respond(null, player);
     });

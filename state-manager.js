@@ -9,7 +9,8 @@ StateManager.prototype.create = function (state) {
     id: state.id,
     tcid: stateCellIndex, // Target cell index.
     type: state.type,
-    create: state
+    create: state,
+    killed: false
   };
   if (state.swid != null) {
     stateRef.swid = state.swid;
@@ -29,9 +30,10 @@ StateManager.prototype.delete = function (stateRef) {
 };
 
 StateManager.prototype.reCreate = function (stateRef) {
-  var newRef = this.stateRefs[stateRef.id];
-  this.stateRefs[stateRef.id].delete = 1;
+  var newRef = stateRef;
+  //this.delete(stateRef);
   this.create(newRef);
+
 };
 
 module.exports.StateManager = StateManager;

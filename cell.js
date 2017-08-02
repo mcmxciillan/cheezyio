@@ -51,6 +51,7 @@ var config = require('./config');
 var BotManager = require('./bot-manager').BotManager;
 var CoinManager = require('./coin-manager').CoinManager;
 var UserManager = require('./user-manager').UserManager;
+var StateManager = require('./state-manager').StateManager;
 
 // This controller will be instantiated once for each
 // cell in our world grid.
@@ -94,6 +95,7 @@ var CellController = function (options, util) {
   }
 
   this.userManager = new UserManager(cellData.player);
+  this.stateManager = new StateManager(cellData.player);
 
   for (var b = 0; b < this.botCount; b++) {
     var bot = this.botManager.addBot();
@@ -428,11 +430,13 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
           console.log("Scored on bot");
         } else {
           console.log("Scored on human");
-          this.deadPlayer = this.userManager.attackUser(player, otherPlayer);
-          if (otherPlayer.killed) {
-            //this.userManager.resetUser(otherPlayer);
-            return true;
-          }
+          this.userManager.attackUser(player, otherPlayer);
+          console.log("New score is " + player.score);
+          console.log("Respawning " + otherPlayer.name);
+          // if (otherPlayer.killed) {
+          //   //this.userManager.resetUser(otherPlayer);
+          //   this.stateManager.reCreate(otherPlayer);
+          // }
         }
       }
     }
