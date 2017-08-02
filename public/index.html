@@ -195,8 +195,9 @@
             user.direction = 'down';
           }
           user.sprite.loadTexture(user.texturePrefix + '-' + user.direction);
-if (user.id == playerId){
-          if (user.x != game.camera.x && user.y != game.camera.y){
+          
+          if (user.id == playerId){
+            if (user.x != game.camera.x && user.y != game.camera.y){
             //game.camera.reset();
             game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
           }

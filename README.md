@@ -14,8 +14,8 @@ To Do:
 - Share results to facebook and twitter
 - Party rooms - share link with friends to invite them to join
 - Banner ad on login screen
-- Ads on a client's x time going to the login screen
-- Create a 
+- Pop up ads on a client's x time going to the login screen
+- Create a
 
 Art ToDo:
 - Background
