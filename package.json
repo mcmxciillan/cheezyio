@@ -3,7 +3,9 @@
   "description": "A simple demo built using SocketCluster and Phaser",
   "version": "2.0.0",
   "dependencies": {
+    "body-parser": "^1.17.2",
     "connect": "3.0.1",
+    "ejs": "^2.5.7",
     "express": "4.13.1",
     "lodash": "4.17.3",
     "minimist": "1.1.0",

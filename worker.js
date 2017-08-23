@@ -12,6 +12,7 @@ var Util = require('./util').Util;
 var SAT = require('sat');
 var rbush = require('rbush');
 var scCodecMinBin = require('sc-codec-min-bin');
+var bodyParser = require('body-parser');
 
 var config = require('./config');
 var CellController = require('./cell');
@@ -75,7 +76,18 @@ module.exports.run = function (worker) {
     // available formats.
     app.use(morgan('dev'));
   }
-  app.use(serveStatic(path.resolve(__dirname, 'public')));
+  app.use(bodyParser.urlencoded({ extended: true }));
+
+  //app.use(serveStatic(path.resolve(__dirname, 'public')));
+  app.set('view engine', 'ejs');
+
+  app.get('/', function(req, res) {
+    res.render('index');
+  });
+
+  app.post('/play', function(req, res) {
+    res.render('game', { nickName: req.body.nickName});
+  });
 
   // Add GET /health-check express route
   healthChecker.attach(worker, app);
