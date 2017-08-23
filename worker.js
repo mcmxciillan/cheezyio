@@ -11,7 +11,7 @@ var ChannelGrid = require('./public/channel-grid').ChannelGrid;
 var Util = require('./util').Util;
 var SAT = require('sat');
 var rbush = require('rbush');
-var scCodecMinBin = require('sc-codec-min-bin');
+var scCodecMinBin = require('./public/sc-codec-min-bin');
 var bodyParser = require('body-parser');
 
 var config = require('./config');
@@ -77,7 +77,8 @@ module.exports.run = function (worker) {
     app.use(morgan('dev'));
   }
   app.use(bodyParser.urlencoded({ extended: true }));
-
+  app.use('/js', express.static('public'));
+  app.use('/img', express.static('public/img'));
   //app.use(serveStatic(path.resolve(__dirname, 'public')));
   app.set('view engine', 'ejs');
 
@@ -85,7 +86,8 @@ module.exports.run = function (worker) {
     res.render('index');
   });
 
-  app.post('/play', function(req, res) {
+  app.post('/game', function(req, res) {
+    console.log("Routing");
     res.render('game', { nickName: req.body.nickName});
   });
 

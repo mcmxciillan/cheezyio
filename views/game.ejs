@@ -2,13 +2,13 @@
 <html>
   <head>
     <title>Cheezy.io</title>
-    <link rel="icon" type="image/png" href="../public/favicon.ico">
-    <script type="text/javascript" src="../public/socketcluster.js"></script>
-    <script src="../public/sc-codec-min-bin.js"></script>
-    <script src="../public/phaser.min.js"></script>
-    <script src="../public/rbush.min.js"></script>
-    <script src="../public/SAT.min.js"></script>
-    <script src="../public/channel-grid.js"></script>
+    <link rel="icon" type="image/png" href="../js/favicon.ico">
+    <script type="text/javascript" src="../js/socketcluster.js"></script>
+    <script src="../js/sc-codec-min-bin.js"></script>
+    <script src="../js/phaser.min.js"></script>
+    <script src="../js/rbush.min.js"></script>
+    <script src="../js/SAT.min.js"></script>
+    <script src="../js/channel-grid.js"></script>
     <style>
       html {
         height: 100%;
@@ -347,7 +347,8 @@
           game.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
           // Generate a random name for the user.
-          var playerName = <%= nickName %>;
+          //var nickname = JSON.stringify(<%=nickName%>);
+          var playerName = "Cheezy " + Math.floor(Math.random() * 9999);
 
           // function resetUser(user){
           //   socket.emit('reset', user);
