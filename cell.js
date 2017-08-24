@@ -428,8 +428,13 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
         player.score += otherPlayer.score;
           this.botManager.removeBot(otherPlayer);
         } else {
-          var killedPlayer = this.userManager.attackUser(player, otherPlayer);
-          otherPlayer = killedPlayer;
+          //console.log("Killing player: " + otherPlayer);
+          otherPlayer.killed = true;
+          //console.log(otherPlayer);
+          //var killedPlayer = this.userManager.attackUser(player, otherPlayer);
+          //console.log("Player has been killed. Removing player: " + killedPlayer);
+          //this.stateManager.removePlayer(killedPlayer);
+          this.stateManager.removePlayer(otherPlayer);
         }
       }
     }

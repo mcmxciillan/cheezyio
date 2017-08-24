@@ -352,17 +352,7 @@
             });
           }
 
-          function reJoinWorld(player) {
-            socket.emit('rejoin', {
-              name: player.name,
-            }, function (err, playerData) {
-              removeUser(player);
-              playerId = playerData.id;
-              updateCellWatchers(playerData, 'cell-data', handleCellData);
-            });
-          }
-
-          function removeAllUserSprites() {
+          function removeAllUserSprites(socket) {
             for (var i in users) {
               if (users.hasOwnProperty(i)) {
                 removeUser(users[i]);
@@ -376,7 +366,7 @@
 
           // For reconnect
           socket.on('connect', joinWorld);
-          socket.on('disconnect', removeAllUserSprites);
+          socket.on('disconnect', removeAllUserSprites(socket));
         }
 
         var lastActionTime = 0;

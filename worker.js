@@ -585,10 +585,6 @@ module.exports.run = function (worker) {
       var type = state.type;
       var id = state.id;
 
-      if(type == 'dead'){
-
-      }
-
       if (!currentCellData[type]) {
         currentCellData[type] = {};
       }
@@ -627,11 +623,14 @@ module.exports.run = function (worker) {
       if (!currentCellData[type]) {
         currentCellData[type] = {};
       }
-      if (type.subtype == 'human'){
-        if(stateRef.create.killed){
-          stateManager.reCreate(stateRef);
-        }
-      }
+      // if(type == 'player'){
+      //   if(stateRef.killed == true) {
+      //     console.log("Why wont you die!");
+      //     function (socket){
+      //       socket.emit('respawn', stateRef);
+      //     }
+      //   }
+      // }
 
       if (!currentCellData[type][id]) {
         var state;
@@ -705,18 +704,6 @@ module.exports.run = function (worker) {
         delete game.stateRefs[state.id];
       }
     });
-
-    stateList.forEach(function(state) {
-      if(state.type == 'player'){
-        if(state.create) {
-          if (state.create.killed == true){
-          console.log("Dead!");
-        } else {
-          console.log();
-        }
-        }
-      }
-    });
   }
 
   setInterval(processInputStates, WORLD_UPDATE_INTERVAL);
@@ -724,6 +711,20 @@ module.exports.run = function (worker) {
   /*
     In here we handle our incoming realtime connections and listen for events.
   */
+  // function work(){
+  //   scServer.on('connection', function (socket) {
+  //     if(socket.player){
+  //       if(!socket.player.subtype == 'bot') {
+  //         if(socket.player.killed) {
+  //         socket.emit('disconnect');
+  //         app.get('/respawn', function(req, res) {
+  //           res.render('respawn');
+  //         });
+  //       }
+  //       }
+  //     }
+  //   });
+  // }
   scServer.on('connection', function (socket) {
 
     socket.on('getWorldInfo', function (data, respond) {
@@ -761,36 +762,38 @@ module.exports.run = function (worker) {
       respond(null, player);
     });
 
-    // socket.on('rejoin', function (playerOptions, respond) {
-    // //  console.log("Rejoining " + playerOptions);
-    //   var newPosition = getRandomPosition(PLAYER_DIAMETER, PLAYER_DIAMETER);
-    //   var player = {
-    //     id: playerOptions.id,
-    //     type: playerOptions.type,
-    //     swid: playerOptions.swid,
-    //     name: playerOptions.name,
-    //     x: newPosition.x,
-    //     y: newPosition.y,
-    //     diam: PLAYER_DIAMETER,
-    //     mass: PLAYER_MASS,
-    //     score: 0,
-    //     killed: false
-    //   };
-    //   socket.player = stateManager.reCreate(player);
-    //
-    //   respond(null, player);
-    // });
-
     socket.on('action', function (playerOp) {
       if (socket.player) {
         stateManager.update(socket.player, playerOp);
+        console.log(socket.player);
+        console.log(socket.player.killed);
+      }
+      if(socket.player.killed) {
+        console.log("Dead player worker 770");
+        socket.emit('reSpawn');
       }
     });
+
+    socket.on('reSpawn', function() {
+
+            if(socket.player.killed) {
+              socket.emit('disconnect');
+                app.get('/respawn', function(req, res) {
+                  res.render('respawn');
+                });
+              }
+      });
+
+      // if (socket.player) {
+      //   console.log(socket);
+      //   console.log("Worker 788");
+      // }
 
     socket.on('disconnect', function () {
       if (socket.player) {
         stateManager.delete(socket.player);
       }
+
     });
   });
 };
