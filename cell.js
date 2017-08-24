@@ -428,7 +428,8 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
         player.score += otherPlayer.score;
           this.botManager.removeBot(otherPlayer);
         } else {
-          this.userManager.attackUser(player, otherPlayer);
+          var killedPlayer = this.userManager.attackUser(player, otherPlayer);
+          otherPlayer = killedPlayer;
         }
       }
     }

@@ -116,12 +116,6 @@
             render: render,
             update: update
           });
-          // // Add all the states
-          // game.state.add('menu', menuState);
-          // game.state.add('play', playState);
-          //
-          // // Start boot state
-          // game.state.start('menu');
         });
 
         function preload() {
@@ -347,12 +341,7 @@
           game.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
           // Generate a random name for the user.
-          //var nickname = JSON.stringify(<%=nickName%>);
           var playerName = "Cheezy " + Math.floor(Math.random() * 9999);
-
-          // function resetUser(user){
-          //   socket.emit('reset', user);
-          // }
 
           function joinWorld() {
             socket.emit('join', {

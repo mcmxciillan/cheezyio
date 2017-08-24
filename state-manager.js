@@ -29,11 +29,4 @@ StateManager.prototype.delete = function (stateRef) {
   this.stateRefs[stateRef.id].delete = 1;
 };
 
-StateManager.prototype.reCreate = function (stateRef) {
-  var newRef = stateRef;
-  //this.delete(stateRef);
-  this.create(newRef);
-
-};
-
 module.exports.StateManager = StateManager;

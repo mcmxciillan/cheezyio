@@ -705,6 +705,18 @@ module.exports.run = function (worker) {
         delete game.stateRefs[state.id];
       }
     });
+
+    stateList.forEach(function(state) {
+      if(state.type == 'player'){
+        if(state.create) {
+          if (state.create.killed == true){
+          console.log("Dead!");
+        } else {
+          console.log();
+        }
+        }
+      }
+    });
   }
 
   setInterval(processInputStates, WORLD_UPDATE_INTERVAL);
@@ -749,25 +761,25 @@ module.exports.run = function (worker) {
       respond(null, player);
     });
 
-    socket.on('rejoin', function (playerOptions, respond) {
-    //  console.log("Rejoining " + playerOptions);
-      var newPosition = getRandomPosition(PLAYER_DIAMETER, PLAYER_DIAMETER);
-      var player = {
-        id: playerOptions.id,
-        type: playerOptions.type,
-        swid: playerOptions.swid,
-        name: playerOptions.name,
-        x: newPosition.x,
-        y: newPosition.y,
-        diam: PLAYER_DIAMETER,
-        mass: PLAYER_MASS,
-        score: 0,
-        killed: false
-      };
-      socket.player = stateManager.reCreate(player);
-
-      respond(null, player);
-    });
+    // socket.on('rejoin', function (playerOptions, respond) {
+    // //  console.log("Rejoining " + playerOptions);
+    //   var newPosition = getRandomPosition(PLAYER_DIAMETER, PLAYER_DIAMETER);
+    //   var player = {
+    //     id: playerOptions.id,
+    //     type: playerOptions.type,
+    //     swid: playerOptions.swid,
+    //     name: playerOptions.name,
+    //     x: newPosition.x,
+    //     y: newPosition.y,
+    //     diam: PLAYER_DIAMETER,
+    //     mass: PLAYER_MASS,
+    //     score: 0,
+    //     killed: false
+    //   };
+    //   socket.player = stateManager.reCreate(player);
+    //
+    //   respond(null, player);
+    // });
 
     socket.on('action', function (playerOp) {
       if (socket.player) {
