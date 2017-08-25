@@ -91,6 +91,12 @@ module.exports.run = function (worker) {
     res.render('game', { nickName: req.body.nickName});
   });
 
+  function goAway() {
+    app.get('/respawn', function(req, res) {
+      res.render('respawn');
+    });
+  }
+
   // Add GET /health-check express route
   healthChecker.attach(worker, app);
 
@@ -764,35 +770,31 @@ module.exports.run = function (worker) {
 
     socket.on('action', function (playerOp) {
       if (socket.player) {
-        stateManager.update(socket.player, playerOp);
-        console.log(socket.player);
-        console.log(socket.player.killed);
+        if(stateManager.update(socket.player, playerOp) == 1) {
+          goAway();
       }
-      if(socket.player.killed) {
+    }
+      if(!(socket.player.subtype =='bot')) {
+        if(socket.player.killed){
         console.log("Dead player worker 770");
-        socket.emit('reSpawn');
+        socket.emit('reSpawn', socket.player);
       }
+    }
     });
 
-    socket.on('reSpawn', function() {
-
-            if(socket.player.killed) {
-              socket.emit('disconnect');
-                app.get('/respawn', function(req, res) {
-                  res.render('respawn');
-                });
+    socket.on('rejoin', function(player) {
+      console.log("in rejoin");
+            if(player.killed) {
+              console.log("About to render");
+                goAway();
               }
       });
-
-      // if (socket.player) {
-      //   console.log(socket);
-      //   console.log("Worker 788");
-      // }
 
     socket.on('disconnect', function () {
       if (socket.player) {
         stateManager.delete(socket.player);
       }
+      //goAway();
 
     });
   });

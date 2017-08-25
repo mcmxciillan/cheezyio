@@ -23,22 +23,17 @@ StateManager.prototype.create = function (state) {
 // by your cell controllers (cell.js).
 StateManager.prototype.update = function (stateRef, operation) {
   this.stateRefs[stateRef.id].op = operation;
-  // if(this.stateRefs[stateRef.id]){
-  //   if(this.stateRefs[stateRef.id].killed = true) {
-  //     console.log("No idea what im doing");
-  //   }
-  // }
+  if(this.stateRefs[stateRef.id]){
+    if(stateRef.killed == true) {
+      return 1;
+    }
+  }
+  return 0;
 };
 
-StateManager.prototype.getPlayer = function(stateRef){
-  return
-}
-
-StateManager.prototype.removePlayer = function(stateRef) {
-  console.log(stateRef);
-  if(stateRef.killed){
-    this.getPlayer(stateRef);
-  }
+StateManager.prototype.killPlayer = function(playerRef) {
+  playerRef.killed = true;
+  return playerRef;
 };
 
 StateManager.prototype.delete = function (stateRef) {

@@ -1,13 +1,8 @@
 var config = require('./config');
 
-var UserManager = function(userData){
-  this.id = userData.id;
-  this.type
-  this.name = userData.name;
-  this.score = userData.x;
-  this.x = userData.x;
-  this.y = userData.y;
-  this.killed = false;
+var UserManager = function(options){
+  this.users = {};
+  this.numUsers = 0;
 };
 
 // UserManager.prototype.resetUser = function (user) {
@@ -17,6 +12,17 @@ var UserManager = function(userData){
 //   console.log("User spawned at X: " + user.x + " Y: " + user.y );
 //   user.killed = false;
 // };
+
+UserManager.prototype.addUser = function(user) {
+  this.users.push(user);
+  this.numUsers++;
+};
+
+UserManager.prototype.removeUser = function (user) {
+  var index = this.users.findIndex(x => x.id == user.id);
+  this.users.splice(index, 1);
+  this.numUsers--;
+};
 
 UserManager.prototype.attackUser = function(user, killedUser) {
 

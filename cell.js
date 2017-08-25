@@ -433,8 +433,8 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
           //console.log(otherPlayer);
           //var killedPlayer = this.userManager.attackUser(player, otherPlayer);
           //console.log("Player has been killed. Removing player: " + killedPlayer);
-          //this.stateManager.removePlayer(killedPlayer);
-          this.stateManager.removePlayer(otherPlayer);
+          this.stateManager.killPlayer(otherPlayer);
+          //this.stateManager.removePlayer(otherPlayer);
         }
       }
     }

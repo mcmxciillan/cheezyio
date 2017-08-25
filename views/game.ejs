@@ -410,6 +410,11 @@
             socket.emit('action', playerOp);
           }
 
+          socket.on('reSpawn', function(player) {
+            socket.emit('rejoin', player);
+          });
+          //socket.on('disconnect', removeAllUserSprites(socket));
+
         }
 
         function render() {
