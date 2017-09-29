@@ -188,20 +188,27 @@
         }
 
         function updateUserGraphics(user) {
+
+          // Move the sprite with the user object
           user.sprite.x = user.x;
           user.sprite.y = user.y;
 
+          // If there's no user direction input, set the direction to down
           if (!user.direction) {
             user.direction = 'down';
           }
+          // Load the image corresponding to the player's direction
           user.sprite.loadTexture(user.texturePrefix + '-' + user.direction);
 
+          // If the user object's id is the same as the player running the current connection
+          // make the camera follow the player
           if (user.id == playerId){
             if (user.x != game.camera.x && user.y != game.camera.y){
             //game.camera.reset();
             game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
           }
         }
+        // Attach the player's nickname to the bottom of their sprite
           user.label.alignTo(user.sprite, Phaser.BOTTOM_CENTER, 0, 10);
         }
 
@@ -359,16 +366,6 @@
             socket.emit('join', {
               name: playerName,
             }, function (err, playerData) {
-              playerId = playerData.id;
-              updateCellWatchers(playerData, 'cell-data', handleCellData);
-            });
-          }
-
-          function reJoinWorld(player) {
-            socket.emit('rejoin', {
-              name: player.name,
-            }, function (err, playerData) {
-              removeUser(player);
               playerId = playerData.id;
               updateCellWatchers(playerData, 'cell-data', handleCellData);
             });

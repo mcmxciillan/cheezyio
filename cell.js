@@ -94,7 +94,7 @@ var CellController = function (options, util) {
     cellData.player = {};
   }
 
-  this.userManager = new UserManager(cellData.player);
+  this.userManager = new UserManager();
   this.stateManager = new StateManager(cellData.player);
 
   for (var b = 0; b < this.botCount; b++) {
@@ -157,6 +157,7 @@ var CellController = function (options, util) {
 CellController.prototype.run = function (cellData) {
   if (!cellData.player) {
     cellData.player = {};
+    this.userManager.clearUsers();
   }
   if (!cellData.coin) {
     cellData.coin = {};
@@ -171,6 +172,10 @@ CellController.prototype.run = function (cellData) {
   this.dropCoins(coins);
   this.generateBotOps(playerIds, players);
   this.applyPlayerOps(playerIds, players, coins);
+
+  for (x in players){
+    this.userManager.addUser(x);
+  }
 };
 
 CellController.prototype.dropCoins = function (coins) {
@@ -425,20 +430,14 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
     if (playerOp) {
       if (playerOp.s == 1 && player.score > 1){
         if(otherPlayer.subtype == 'bot'){
-        player.score += otherPlayer.score;
+          player.score += (otherPlayer.score / 2);
+          otherPlayer.score = otherPlayer.score / 2;
           this.botManager.removeBot(otherPlayer);
         } else {
-          //console.log("Killing player: " + otherPlayer);
-          otherPlayer.killed = true;
-          //console.log(otherPlayer);
-          //var killedPlayer = this.userManager.attackUser(player, otherPlayer);
-          //console.log("Player has been killed. Removing player: " + killedPlayer);
-          this.stateManager.killPlayer(otherPlayer);
-          //this.stateManager.removePlayer(otherPlayer);
+          this.userManager.battle(player, otherPlayer);
         }
       }
     }
-    //console.log(playerOp);
 
     var olv = result.overlapV;
 

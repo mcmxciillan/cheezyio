@@ -352,12 +352,13 @@
             });
           }
 
-          function removeAllUserSprites(socket) {
+          function removeAllUserSprites(player) {
             for (var i in users) {
               if (users.hasOwnProperty(i)) {
                 removeUser(users[i]);
               }
             }
+            socket.emit('reRoute', player);
           }
 
           if (socket.state == 'open') {
@@ -366,7 +367,7 @@
 
           // For reconnect
           socket.on('connect', joinWorld);
-          socket.on('disconnect', removeAllUserSprites(socket));
+          socket.on('disconnect', removeAllUserSprites(socket.player));
         }
 
         var lastActionTime = 0;
@@ -409,11 +410,19 @@
             // Send the player operations for the server to process.
             socket.emit('action', playerOp);
           }
-
-          socket.on('reSpawn', function(player) {
-            socket.emit('rejoin', player);
-          });
           //socket.on('disconnect', removeAllUserSprites(socket));
+
+          socket.subscribe('pong').watch(function (count) {
+            console.log('Ping: ', count);
+          });
+
+          socket.subscribe('kick').watch(function(id) {
+            console.log("kicked", id + socket.player.id);
+          });
+
+          // socket.on('kick', function(player) {
+          //   console.log("kicked", id + socket.player.id);
+          // });
 
         }
 

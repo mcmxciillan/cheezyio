@@ -67,6 +67,8 @@ module.exports.run = function (worker) {
   var serverWorkerId = worker.options.instanceId + ':' + worker.id;
 
   var app = express();
+  // var server = app.listen(8000);
+  // var io = require('')
 
   var httpServer = worker.httpServer;
   var scServer = worker.scServer;
@@ -76,6 +78,7 @@ module.exports.run = function (worker) {
     // available formats.
     app.use(morgan('dev'));
   }
+
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use('/js', express.static('public'));
   app.use('/img', express.static('public/img'));
@@ -90,12 +93,6 @@ module.exports.run = function (worker) {
     console.log("Routing");
     res.render('game', { nickName: req.body.nickName});
   });
-
-  function goAway() {
-    app.get('/respawn', function(req, res) {
-      res.render('respawn');
-    });
-  }
 
   // Add GET /health-check express route
   healthChecker.attach(worker, app);
@@ -572,6 +569,9 @@ module.exports.run = function (worker) {
     workerCellTransferIds.forEach(function (swid) {
       scServer.exchange.publish('internal/input-cell-transition/' + swid, workerStateRefList[swid]);
     });
+    //var count = 13;
+    //scServer.exchange.publish('pong', count);
+
 
     // Pass states off to adjacent cells as they move across grid cells.
     var allNearbyCellIndexes = Object.keys(statesForNearbyCells);
@@ -717,20 +717,6 @@ module.exports.run = function (worker) {
   /*
     In here we handle our incoming realtime connections and listen for events.
   */
-  // function work(){
-  //   scServer.on('connection', function (socket) {
-  //     if(socket.player){
-  //       if(!socket.player.subtype == 'bot') {
-  //         if(socket.player.killed) {
-  //         socket.emit('disconnect');
-  //         app.get('/respawn', function(req, res) {
-  //           res.render('respawn');
-  //         });
-  //       }
-  //       }
-  //     }
-  //   });
-  // }
   scServer.on('connection', function (socket) {
 
     socket.on('getWorldInfo', function (data, respond) {
@@ -750,6 +736,7 @@ module.exports.run = function (worker) {
 
     socket.on('join', function (playerOptions, respond) {
       var startingPos = getRandomPosition(PLAYER_DIAMETER, PLAYER_DIAMETER);
+
       var player = {
         id: uuid.v4(),
         type: 'player',
@@ -764,38 +751,29 @@ module.exports.run = function (worker) {
       };
 
       socket.player = stateManager.create(player);
+      // this.userManager.addUser(player);
 
       respond(null, player);
     });
 
     socket.on('action', function (playerOp) {
       if (socket.player) {
-        if(stateManager.update(socket.player, playerOp) == 1) {
-          goAway();
+        stateManager.update(socket.player, playerOp);
+        // for (x in cellControllers) {
+        //   if (x.userManager.users[x.userManager.getUserIndex(socket.player)]) {
+        //     if (x.userManager.users[x.userManager.getUserIndex(socket.player)].killed) {
+        //       x.userManager.users[x.userManager.getUserIndex(socket.player)].killed = false;
+        //       scServer.exchange.publish('kick', socket.player.id )
+        //     }
+        //   }
+        // }
       }
-    }
-      if(!(socket.player.subtype =='bot')) {
-        if(socket.player.killed){
-        console.log("Dead player worker 770");
-        socket.emit('reSpawn', socket.player);
-      }
-    }
     });
-
-    socket.on('rejoin', function(player) {
-      console.log("in rejoin");
-            if(player.killed) {
-              console.log("About to render");
-                goAway();
-              }
-      });
 
     socket.on('disconnect', function () {
       if (socket.player) {
         stateManager.delete(socket.player);
       }
-      //goAway();
-
     });
   });
 };

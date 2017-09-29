@@ -1,45 +1,42 @@
 var config = require('./config');
 
-var UserManager = function(options){
-  this.users = {};
+var UserManager = function(){
+  this.users = [];
   this.numUsers = 0;
+  //this.king = 0;
 };
-
-// UserManager.prototype.resetUser = function (user) {
-//   user.score = 0;
-//   user.x = Math.random() * config.WORLD_WIDTH;
-//   user.y = Math.random() * config.WORLD_HEIGHT;
-//   console.log("User spawned at X: " + user.x + " Y: " + user.y );
-//   user.killed = false;
-// };
 
 UserManager.prototype.addUser = function(user) {
   this.users.push(user);
   this.numUsers++;
 };
 
+UserManager.prototype.getUserIndex = function (user) {
+
+  return this.users.findIndex(x => x.id == user.id);
+}
+
 UserManager.prototype.removeUser = function (user) {
-  var index = this.users.findIndex(x => x.id == user.id);
+
+  var index = this.getUserIndex(user);
   this.users.splice(index, 1);
   this.numUsers--;
 };
 
-UserManager.prototype.attackUser = function(user, killedUser) {
+UserManager.prototype.clearUsers = function() {
+  this.users = {};
+};
 
-    killedUser.killed = true;
-    user.score += killedUser.score;
-    console.log("Victim " + killedUser.name + " is killed: " + killedUser.killed);
-    console.log("Winner is " + user.name + " Killed?: " + user.killed);
-    //this.resetUser(killedUser);
-    return killedUser;
+UserManager.prototype.battle = function(user, otherUser) {
+  if (user.score > otherUser.score) {
+    otherUser.killed = true;
+    user.score += otherUser.score;
+    otherUser.score = 0;
+  }
 };
 
 UserManager.prototype.resetUser = function() {
 
 };
-
-// UserManager.prototype.resetUser = function (user) {
-//   user.reset = 1;
-// };
 
 module.exports.UserManager = UserManager;
