@@ -85,10 +85,11 @@
           3: 'img/cheese-3.PNG',
           4: 'img/cheese-4.PNG'
         };
+          
 
         // 1 means no smoothing. 0.1 is quite smooth.
         var CAMERA_SMOOTHING = .1;
-        var BACKGROUND_TEXTURE = 'img/background-texture.png';
+        var BACKGROUND_TEXTURE = 'img/checkers-darkest.png';
 
         socket.emit('getWorldInfo', null, function (err, data) {
           WORLD_WIDTH = data.width;
@@ -148,6 +149,7 @@
           game.load.image('grass-2', grassTextures[2]);
           game.load.image('grass-3', grassTextures[3]);
           game.load.image('grass-4', grassTextures[4]);
+            game.load.audio('cheezylofi', 'music/cheezylofi.wav');
         }
 
         function handleCellData(stateList) {
@@ -339,6 +341,11 @@
           background = game.add.tileSprite(0, 0, WORLD_WIDTH, WORLD_HEIGHT, 'background');
           game.time.advancedTiming = true;
           game.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+            
+            
+            var music = game.add.audio('cheezylofi');
+            music.loop = true;
+            music.play();
 
           // Generate a random name for the user.
           var playerName = "Cheezy " + Math.floor(Math.random() * 9999);

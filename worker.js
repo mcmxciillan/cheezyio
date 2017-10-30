@@ -82,6 +82,7 @@ module.exports.run = function (worker) {
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use('/js', express.static('public'));
   app.use('/img', express.static('public/img'));
+    app.use('/music', express.static('public/music'));
   //app.use(serveStatic(path.resolve(__dirname, 'public')));
   app.set('view engine', 'ejs');
 
