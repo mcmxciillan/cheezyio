@@ -2,7 +2,9 @@ var fs = require('fs');
 var argv = require('minimist')(process.argv.slice(2));
 var SocketCluster = require('socketcluster').SocketCluster;
 var scHotReboot = require('sc-hot-reboot');
-
+// var express = require('express');
+// var app = express();
+// var http = require('http');
 var workerControllerPath = argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER;
 var brokerControllerPath = argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER;
 var initControllerPath = argv.ic || process.env.SOCKETCLUSTER_INIT_CONTROLLER;
