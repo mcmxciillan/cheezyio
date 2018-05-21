@@ -26,6 +26,13 @@
         left: 20%;
         opacity: .9;
       }
+      #scoreboardContainer {
+        position: absolute;
+        top: 0%;
+        left: 0%;
+        width: 10px;
+        height: 30px;
+      }
       html {
         width: 100% !important;
         height: 100% !important;
@@ -99,6 +106,36 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div id="scoreboardContainer" class="container">
+      <table class="striped">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Score</th>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              CheezyTest1
+            </td>
+            <td>
+              9000
+            </td>
+          </tr>
+          <tr>
+            <td>
+              CheezyTest2
+            </td>
+            <td>
+              900
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <script type="text/javascript">
@@ -346,7 +383,7 @@
       user.score = userData.score;
       user.sprite = sprite;
 
-      user.sprite.width = Math.round(userData.diam * 0.73);
+      user.sprite.width = Math.round(userData.diam);
       user.sprite.height = userData.diam;
       user.diam = user.sprite.width;
 
