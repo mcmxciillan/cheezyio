@@ -31,7 +31,7 @@ UserManager.prototype.battle = function(user, otherUser) {
   if (user.score > otherUser.score) {
     otherUser.killed = true;
     user.score += otherUser.score;
-    user.score = Math.ceil(user.score);
+    user.score = Math.round(user.score);
     otherUser.score = 0;
   }
 };
