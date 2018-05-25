@@ -3,6 +3,16 @@
   <head>
     <title>Cheezy.io</title>
     <link rel="icon" type="image/png" href="../js/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.min.js"
+      integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+      crossorigin="anonymous"></script>
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/js/materialize.min.js"></script>
     <script type="text/javascript" src="../js/socketcluster.js"></script>
     <script src="../js/sc-codec-min-bin.js"></script>
     <script src="../js/phaser.min.js"></script>
@@ -10,22 +20,124 @@
     <script src="../js/SAT.min.js"></script>
     <script src="../js/channel-grid.js"></script>
     <style>
+      #entryContainer {
+        position: absolute;
+        top: 25%;
+        left: 20%;
+        opacity: .9;
+      }
+      #scoreboardContainer {
+        position: absolute;
+        top: 0%;
+        left: 0%;
+        width: 10px;
+        height: 30px;
+      }
       html {
-        height: 100%;
+        width: 100% !important;
+        height: 100% !important;
       }
       body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        color: #666666;
+        width: 100% !important;
+        height: 100% !important;
       }
+      nav {
+        background-color: transparent !important;
+        box-shadow: none !important;
+        position: absolute !important;
+      }
+      #nav-links > li > i:hover {
+        cursor: pointer !important;
+        color: rgba(0, 0, 0, 1) !important;
+      }
+      #nav-links > li {
+        padding: 1em !important;
+      }
+      /* canvas {
+        width: 100% !important;
+        height: 100% !important;
+      } */
     </style>
   </head>
   <body>
-    <!--<h1>Cheese.io</h1>
 
-    <input type="button" onclick="getCheese()">Play</input>-->
+    <div id="entryContainer" class="container">
+      <div class="row">
+        <div class="col s4 offset-s4">
+          <div class="card">
+            <div class="card-content">
+              <span class="card-title">Let's Get Cheezy!</span>
+              <label for="nickname">Enter Nickname</label>
+              <input id="nickname" type="text" class="validate">
+            </div>
+            <div class="card-action">
+              <button class="btn waves-effect waves-light" onclick="setNickname()">
+                Submit
+                <!-- <i class="material-icons right">send</i> -->
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-wrapper">
+        <ul id="nav-links" class="right">
+          <li><i class="material-icons">person_pin</i></li>
+          <li><i class="material-icons">add_shopping_cart</i></li>
+        </ul>
+      </div>
+    </nav>
+    <div id="menuContainer" class="container hide">
+      <div class="row">
+        <div class="col s4 offset-s4">
+          <div class="card">
+            <div class="card-content">
+              <span class="card-title">Let's Get Cheezy!</span>
+              <label for="nickname">Enter Nickname</label>
+              <input id="nickname" type="text" class="validate">
+            </div>
+            <div class="card-action">
+              <button class="btn waves-effect waves-light" onclick="setNickname()">
+                Submit
+                <!-- <i class="material-icons right">send</i> -->
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="scoreboardContainer" class="container">
+      <table class="striped">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Score</th>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              CheezyTest1
+            </td>
+            <td>
+              9000
+            </td>
+          </tr>
+          <tr>
+            <td>
+              CheezyTest2
+            </td>
+            <td>
+              900
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <script type="text/javascript">
 
       var socket = socketCluster.connect({
@@ -34,449 +146,503 @@
 
       //var cellController = require('./cell').CellController;
 
-      window.onload = function() {
+      //  Note that this html file is set to pull down Phaser from our public/ directory.
+      //  Although it will work fine with this tutorial, it's almost certainly not the most current version.
+      //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
 
-        //  Note that this html file is set to pull down Phaser from our public/ directory.
-        //  Although it will work fine with this tutorial, it's almost certainly not the most current version.
-        //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
+    var game, playerId, player, king = "", playerName="", maxScore = 0;
+    users = {};
+    coins = {};
 
-        var game, playerId, player, king = "", maxScore = 0;
-        users = {};
-        coins = {};
+    var WORLD_WIDTH;
+    var WORLD_HEIGHT;
+    var WORLD_COLS;
+    var WORLD_ROWS;
+    var WORLD_CELL_WIDTH;
+    var WORLD_CELL_HEIGHT;
+    var PLAYER_LINE_OF_SIGHT = Math.round(window.innerWidth);
+    var PLAYER_INACTIVITY_TIMEOUT = 700;
+    var USER_INPUT_INTERVAL = 20;
+    var COIN_INACTIVITY_TIMEOUT = 2200;
+    var ENVIRONMENT;
+    var SERVER_WORKER_ID;
 
-        var WORLD_WIDTH;
-        var WORLD_HEIGHT;
-        var WORLD_COLS;
-        var WORLD_ROWS;
-        var WORLD_CELL_WIDTH;
-        var WORLD_CELL_HEIGHT;
-        var PLAYER_LINE_OF_SIGHT = Math.round(window.innerWidth);
-        var PLAYER_INACTIVITY_TIMEOUT = 700;
-        var USER_INPUT_INTERVAL = 20;
-        var COIN_INACTIVITY_TIMEOUT = 2200;
-        var ENVIRONMENT;
-        var SERVER_WORKER_ID;
+    var youTextures = {
+      up: 'img/gmouse-back.png',
+      left: 'img/gmouse-left.png',
+      right: 'img/gmouse-right.png',
+      down: 'img/gmouse-front.png'
+    };
 
-        var youTextures = {
-          up: 'img/gmouse-back.png',
-          left: 'img/gmouse-left.png',
-          right: 'img/gmouse-right.png',
-          down: 'img/gmouse-front.png'
-        };
+    var othersTextures = {
+      up: 'img/bmouse-back.png',
+      left: 'img/bmouse-left.png',
+      right: 'img/bmouse-right.png',
+      down: 'img/bmouse-front.png'
+    };
 
-        var othersTextures = {
-          up: 'img/bmouse-back.png',
-          left: 'img/bmouse-left.png',
-          right: 'img/bmouse-right.png',
-          down: 'img/bmouse-front.png'
-        };
+    var botTextures = {
+      up: 'img/wmouse-back.png',
+      left: 'img/wmouse-left.png',
+      right: 'img/wmouse-right.png',
+      down: 'img/wmouse-front.png'
+    };
 
-        var botTextures = {
-          up: 'img/wmouse-back.png',
-          left: 'img/wmouse-left.png',
-          right: 'img/wmouse-right.png',
-          down: 'img/wmouse-front.png'
-        };
+    // Map the score value to the texture.
+    var grassTextures = {
+      1: 'img/cheese-1.PNG',
+      2: 'img/cheese-2.PNG',
+      3: 'img/cheese-3.PNG',
+      4: 'img/cheese-4.PNG'
+    };
 
-        // Map the score value to the texture.
-        var grassTextures = {
-          1: 'img/cheese-1.PNG',
-          2: 'img/cheese-2.PNG',
-          3: 'img/cheese-3.PNG',
-          4: 'img/cheese-4.PNG'
-        };
-          
 
-        // 1 means no smoothing. 0.1 is quite smooth.
-        var CAMERA_SMOOTHING = .1;
-        var BACKGROUND_TEXTURE = 'img/checkers-darkest.png';
+    // 1 means no smoothing. 0.1 is quite smooth.
+    var CAMERA_SMOOTHING = .1;
+    var BACKGROUND_TEXTURE = 'img/checkers-darkest.png';
 
-        socket.emit('getWorldInfo', null, function (err, data) {
-          WORLD_WIDTH = data.width;
-          WORLD_HEIGHT = data.height;
-          WORLD_COLS = data.cols;
-          WORLD_ROWS = data.rows;
-          WORLD_CELL_WIDTH = data.cellWidth;
-          WORLD_CELL_HEIGHT = data.cellHeight;
-          WORLD_CELL_OVERLAP_DISTANCE = data.cellOverlapDistance;
-          SERVER_WORKER_ID = data.serverWorkerId;
-          ENVIRONMENT = data.environment;
+    socket.emit('getWorldInfo', null, function (err, data) {
+      WORLD_WIDTH = data.width;
+      WORLD_HEIGHT = data.height;
+      WORLD_COLS = data.cols;
+      WORLD_ROWS = data.rows;
+      WORLD_CELL_WIDTH = data.cellWidth;
+      WORLD_CELL_HEIGHT = data.cellHeight;
+      WORLD_CELL_OVERLAP_DISTANCE = data.cellOverlapDistance;
+      SERVER_WORKER_ID = data.serverWorkerId;
+      ENVIRONMENT = data.environment;
 
-          channelGrid = new ChannelGrid({
-            worldWidth: WORLD_WIDTH,
-            worldHeight: WORLD_HEIGHT,
-            rows: WORLD_ROWS,
-            cols: WORLD_COLS,
-            cellOverlapDistance: WORLD_CELL_OVERLAP_DISTANCE,
-            exchange: socket
-          });
+      channelGrid = new ChannelGrid({
+        worldWidth: WORLD_WIDTH,
+        worldHeight: WORLD_HEIGHT,
+        rows: WORLD_ROWS,
+        cols: WORLD_COLS,
+        cellOverlapDistance: WORLD_CELL_OVERLAP_DISTANCE,
+        exchange: socket
+      });
+      game = new Phaser.Game('100', '100', Phaser.AUTO, '', {
+        preload: preload,
+        create: create,
+        render: render,
+        update: update
+      });
+    });
 
-          game = new Phaser.Game('100', '100', Phaser.AUTO, '', {
-            preload: preload,
-            create: create,
-            render: render,
-            update: update
-          });
-        });
-
-        function preload() {
-          keys = {
-            up: game.input.keyboard.addKey(Phaser.Keyboard.UP),
-            down: game.input.keyboard.addKey(Phaser.Keyboard.DOWN),
-            right: game.input.keyboard.addKey(Phaser.Keyboard.RIGHT),
-            left: game.input.keyboard.addKey(Phaser.Keyboard.LEFT),
-            space: game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
-          };
-
-          game.load.image('background', BACKGROUND_TEXTURE);
-
-          game.load.image('you-up', youTextures.up);
-          game.load.image('you-down', youTextures.down);
-          game.load.image('you-right', youTextures.right);
-          game.load.image('you-left', youTextures.left);
-
-          game.load.image('others-up', othersTextures.up);
-          game.load.image('others-down', othersTextures.down);
-          game.load.image('others-right', othersTextures.right);
-          game.load.image('others-left', othersTextures.left);
-
-          game.load.image('bot-up', botTextures.up);
-          game.load.image('bot-down', botTextures.down);
-          game.load.image('bot-right', botTextures.right);
-          game.load.image('bot-left', botTextures.left);
-
-          game.load.image('grass-1', grassTextures[1]);
-          game.load.image('grass-2', grassTextures[2]);
-          game.load.image('grass-3', grassTextures[3]);
-          game.load.image('grass-4', grassTextures[4]);
-            game.load.audio('cheezylofi', 'music/cheezylofi.wav');
-        }
-
-        function handleCellData(stateList) {
-          stateList.forEach(function (state) {
-            if (state.type == 'player') {
-              updateUser(state);
-            } else if (state.type == 'coin') {
-              if (state.delete) {
-                removeCoin(state);
-              } else {
-                renderCoin(state);
-              }
-            }
-          });
-          updatePlayerZIndexes();
-        }
-
-        var watchingCells = {};
-
-        /*
-          Data channels within our game are divided a grids and we only watch the cells
-          which are within our player's line of sight.
-          As the player moves around the game world, we need to keep updating the cell subscriptions.
-        */
-        function updateCellWatchers(playerData, channelName, handler) {
-          var options = {
-            lineOfSight: PLAYER_LINE_OF_SIGHT
-          };
-          channelGrid.updateCellWatchers(playerData, channelName, options, handler);
-        }
-
-        function updateUserGraphics(user) {
-          user.sprite.x = user.x;
-          user.sprite.y = user.y;
-
-          if (!user.direction) {
-            user.direction = 'down';
-          }
-          user.sprite.loadTexture(user.texturePrefix + '-' + user.direction);
-
-          if (user.id == playerId){
-            if (user.x != game.camera.x && user.y != game.camera.y){
-            //game.camera.reset();
-            game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
-          }
-        }
-          user.label.alignTo(user.sprite, Phaser.BOTTOM_CENTER, 0, 10);
-        }
-
-        function moveUser(userId, x, y) {
-          var user = users[userId];
-          user.x = x;
-          user.y = y;
-          updateUserGraphics(user);
-          user.clientProcessed = Date.now();
-
-          if (user.id == playerId) {
-            updateCellWatchers(user, 'cell-data', handleCellData);
-            //console.log("Locked!");
-          }
-        }
-
-        function removeUser(userData) {
-          var user = users[userData.id];
-          if (user) {
-            user.sprite.destroy();
-            user.label.destroy();
-            delete users[userData.id];
-          }
-        }
-
-        function createTexturedSprite(options) {
-          var sprite = game.add.sprite(0, 0, options.texture);
-          sprite.anchor.setTo(0.5);
-
-          return sprite;
-        }
-
-        function createUserSprite(userData) {
-          var user = {};
-          users[userData.id] = user;
-          user.id = userData.id;
-          user.swid = userData.swid;
-          user.name = userData.name;
-
-          var textStyle = {
-            font: '16px Arial',
-            fill: '#666666',
-            align: 'center'
-          };
-
-          user.label = game.add.text(0, 0, user.name, textStyle);
-          user.label.anchor.set(0.5);
-
-          var sprite;
-
-          if (userData.id == playerId) {
-            sprite = createTexturedSprite({
-              texture: 'you-down'
-            });
-            user.texturePrefix = 'you';
-          } else if (userData.subtype == 'bot') {
-            sprite = createTexturedSprite({
-              texture: 'bot-down'
-            });
-            user.texturePrefix = 'bot';
-          } else {
-            sprite = createTexturedSprite({
-              texture: 'others-down'
-            });
-            user.texturePrefix = 'others';
-          }
-          user.score = userData.score;
-          user.sprite = sprite;
-
-          user.sprite.width = Math.round(userData.diam * 0.73);
-          user.sprite.height = userData.diam;
-          user.diam = user.sprite.width;
-
-          moveUser(userData.id, userData.x, userData.y);
-
-          if (userData.id == playerId) {
-            player = user;
-            game.camera.setSize(window.innerWidth, window.innerHeight);
-            game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
-          }
-        }
-
-        function updatePlayerZIndexes() {
-          var usersArray = [];
-          for (var i in users) {
-            if (users.hasOwnProperty(i)) {
-              usersArray.push(users[i]);
-            }
-          }
-          usersArray.sort(function (a, b) {
-            if (a.y < b.y) {
-              return -1;
-            }
-            if (a.y > b.y) {
-              return 1;
-            }
-            return 0;
-          });
-          usersArray.forEach(function (user) {
-            user.label.bringToTop();
-            user.sprite.bringToTop();
-          });
-        }
-
-        function updateUser(userData) {
-          var user = users[userData.id];
-          if (user) {
-            user.score = userData.score;
-            user.direction = userData.direction;
-            moveUser(userData.id, userData.x, userData.y);
-
-          } else {
-            createUserSprite(userData);
-            //console.log(userData);
-          }
-
-        }
-
-        function removeCoin(coinData) {
-          var coinToRemove = coins[coinData.id];
-          if (coinToRemove) {
-            coinToRemove.sprite.destroy();
-            delete coins[coinToRemove.id];
-          }
-        }
-
-        function renderCoin(coinData) {
-          if (coins[coinData.id]) {
-            coins[coinData.id].clientProcessed = Date.now();
-          } else {
-            var coin = coinData;
-            coins[coinData.id] = coin;
-            coin.sprite = createTexturedSprite({
-              texture: 'grass-' + (coinData.t || '1')
-            });
-            coin.sprite.x = coinData.x;
-            coin.sprite.y = coinData.y;
-            coin.clientProcessed = Date.now();
-          }
-        }
-
-        function create() {
-          background = game.add.tileSprite(0, 0, WORLD_WIDTH, WORLD_HEIGHT, 'background');
-          game.time.advancedTiming = true;
-          game.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-            
-            
-            var music = game.add.audio('cheezylofi');
-            music.loop = true;
-            music.play();
-
-          // Generate a random name for the user.
-          var playerName = "Cheezy " + Math.floor(Math.random() * 9999);
-
-          function joinWorld() {
-            socket.emit('join', {
-              name: playerName,
-            }, function (err, playerData) {
-              playerId = playerData.id;
-              updateCellWatchers(playerData, 'cell-data', handleCellData);
-            });
-          }
-
-          function removeAllUserSprites(player) {
-            for (var i in users) {
-              if (users.hasOwnProperty(i)) {
-                removeUser(users[i]);
-              }
-            }
-            socket.emit('reRoute', player);
-          }
-
-          if (socket.state == 'open') {
-            joinWorld();
-          }
-
-          // For reconnect
-          socket.on('connect', joinWorld);
-          socket.on('disconnect', removeAllUserSprites(socket.player));
-        }
-
-        var lastActionTime = 0;
-
-        function update() {
-          var didAction = false;
-          var playerOp = {};
-          if (keys.up.isDown) {
-            playerOp.u = 1;
-            didAction = true;
-          } else {
-            playerOp.u = 0;
-          }
-          if (keys.down.isDown) {
-            playerOp.d = 1;
-            didAction = true;
-          } else {
-            playerOp.d = 0;
-          }
-          if (keys.right.isDown) {
-            playerOp.r = 1;
-            didAction = true;
-          } else {
-            playerOp.r = 0;
-          }
-          if (keys.left.isDown) {
-            playerOp.l = 1;
-            didAction = true;
-          } else {
-            playerOp.l = 0;
-          }
-          if (keys.space.isDown) {
-            playerOp.s = 1;
-            didAction = true;
-          } else {
-            playerOp.s = 0;
-          }
-          if (didAction && Date.now() - lastActionTime >= USER_INPUT_INTERVAL) {
-            lastActionTime = Date.now();
-            // Send the player operations for the server to process.
-            socket.emit('action', playerOp);
-          }
-          //socket.on('disconnect', removeAllUserSprites(socket));
-
-          socket.subscribe('pong').watch(function (count) {
-            console.log('Ping: ', count);
-          });
-
-          socket.subscribe('kick').watch(function(id) {
-            console.log("kicked", id + socket.player.id);
-          });
-
-          // socket.on('kick', function(player) {
-          //   console.log("kicked", id + socket.player.id);
-          // });
-
-        }
-
-        function render() {
-
-          var now = Date.now();
-
-          if (ENVIRONMENT == 'dev') {
-            game.debug.text('FPS:   ' + game.time.fps, 2, 14, "#00FF00");
-            if (player) {
-              game.debug.text('Score: ' + player.score, 2, 30, "#00FF00");
-              game.debug.text('King: ' + king.name , 2, 45, '#00FF00');
-              //console.log();
-            }
-          }
-
-          for (var i in users){
-            if (users.hasOwnProperty(i)) {
-              var curUser = users[i];
-              if (curUser.score > maxScore){
-                maxScore = curUser.score;
-                king = curUser;
-                game.debug.text('King: ' + king.name, 2, 45, '#00FF00');
-                //console.log(curUser.name);
-              }
-            }
-          }
-
-          for (var i in users) {
-            if (users.hasOwnProperty(i)) {
-              var curUser = users[i];
-              if (now - curUser.clientProcessed > PLAYER_INACTIVITY_TIMEOUT) {
-                removeUser(curUser);
-              }
-            }
-          }
-
-          for (var j in coins) {
-            if (coins.hasOwnProperty(j)) {
-              var curCoin = coins[j];
-              if (now - curCoin.clientProcessed > COIN_INACTIVITY_TIMEOUT) {
-                removeCoin(curCoin);
-              }
-            }
-          }
-        }
+    function preload() {
+      keys = {
+        up: game.input.keyboard.addKey(Phaser.Keyboard.UP),
+        down: game.input.keyboard.addKey(Phaser.Keyboard.DOWN),
+        right: game.input.keyboard.addKey(Phaser.Keyboard.RIGHT),
+        left: game.input.keyboard.addKey(Phaser.Keyboard.LEFT),
+        space: game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
       };
+
+      game.load.image('background', BACKGROUND_TEXTURE);
+
+      game.load.image('you-up', youTextures.up);
+      game.load.image('you-down', youTextures.down);
+      game.load.image('you-right', youTextures.right);
+      game.load.image('you-left', youTextures.left);
+
+      game.load.image('others-up', othersTextures.up);
+      game.load.image('others-down', othersTextures.down);
+      game.load.image('others-right', othersTextures.right);
+      game.load.image('others-left', othersTextures.left);
+
+      game.load.image('bot-up', botTextures.up);
+      game.load.image('bot-down', botTextures.down);
+      game.load.image('bot-right', botTextures.right);
+      game.load.image('bot-left', botTextures.left);
+
+      game.load.image('grass-1', grassTextures[1]);
+      game.load.image('grass-2', grassTextures[2]);
+      game.load.image('grass-3', grassTextures[3]);
+      game.load.image('grass-4', grassTextures[4]);
+      game.load.audio('cheezylofi', 'music/cheezylofi.wav');
+    }
+
+    function handleCellData(stateList) {
+      console.log("=========Handle Cell Data========");
+      stateList.forEach(function (state) {
+        // console.log("======== States =======");
+        // console.log(state);
+        if (state.type == 'player') {
+          updateUser(state);
+        } else if (state.type == 'coin') {
+          if (state.delete) {
+            removeCoin(state);
+          } else {
+            renderCoin(state);
+          }
+        }
+      });
+      updatePlayerZIndexes();
+    }
+
+    var watchingCells = {};
+
+    /*
+      Data channels within our game are divided a grids and we only watch the cells
+      which are within our player's line of sight.
+      As the player moves around the game world, we need to keep updating the cell subscriptions.
+    */
+    function updateCellWatchers(playerData, channelName, handler) {
+      console.log("============== Update Cell Watchers ========");
+      var options = {
+        lineOfSight: PLAYER_LINE_OF_SIGHT
+      };
+      channelGrid.updateCellWatchers(playerData, channelName, options, handler);
+    }
+
+    function updateUserGraphics(user) {
+      console.log("=========== Update User Graphics ==============");
+      user.sprite.x = user.x;
+      user.sprite.y = user.y;
+
+      if (!user.direction) {
+        user.direction = 'down';
+      }
+      user.sprite.loadTexture(user.texturePrefix + '-' + user.direction);
+
+      if (user.id == playerId){
+        if (user.x != game.camera.x && user.y != game.camera.y){
+        //game.camera.reset();
+        game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
+      }
+    }
+      user.label.alignTo(user.sprite, Phaser.BOTTOM_CENTER, 0, 10);
+    }
+
+    function moveUser(userId, x, y) {
+      console.log("============== Move user =============");
+      var user = users[userId];
+      user.x = x;
+      user.y = y;
+      updateUserGraphics(user);
+      user.clientProcessed = Date.now();
+
+      if (user.id == playerId) {
+        updateCellWatchers(user, 'cell-data', handleCellData);
+        //console.log("Locked!");
+      }
+    }
+
+    function removeUser(userData) {
+      console.log("============== Remove user ===========");
+      var user = users[userData.id];
+      if (user) {
+        user.sprite.destroy();
+        user.label.destroy();
+        delete users[userData.id];
+      }
+    }
+
+    function createTexturedSprite(options) {
+      console.log("============ Create textured sprite =========== ");
+      var sprite = game.add.sprite(0, 0, options.texture);
+      sprite.anchor.setTo(0.5);
+
+      return sprite;
+    }
+
+    function createUserSprite(userData) {
+      console.log("============ Create user sprite ============");
+      var user = {};
+      users[userData.id] = user;
+      user.id = userData.id;
+      user.swid = userData.swid;
+      user.name = userData.name;
+
+      var textStyle = {
+        font: '16px Arial',
+        fill: '#666666',
+        align: 'center'
+      };
+
+      user.label = game.add.text(0, 0, user.name, textStyle);
+      user.label.anchor.set(0.5);
+
+      var sprite;
+
+      if (userData.id == playerId) {
+        sprite = createTexturedSprite({
+          texture: 'you-down'
+        });
+        user.texturePrefix = 'you';
+      } else if (userData.subtype == 'bot') {
+        sprite = createTexturedSprite({
+          texture: 'bot-down'
+        });
+        user.texturePrefix = 'bot';
+      } else {
+        sprite = createTexturedSprite({
+          texture: 'others-down'
+        });
+        user.texturePrefix = 'others';
+      }
+      user.score = userData.score;
+      user.sprite = sprite;
+
+      user.sprite.width = Math.round(userData.diam);
+      user.sprite.height = userData.diam;
+      user.diam = user.sprite.width;
+
+      moveUser(userData.id, userData.x, userData.y);
+
+      if (userData.id == playerId) {
+        player = user;
+        game.camera.setSize(window.innerWidth, window.innerHeight);
+        game.camera.follow(user.sprite, null, CAMERA_SMOOTHING, CAMERA_SMOOTHING);
+      }
+    }
+
+    function updatePlayerZIndexes() {
+      console.log("======== Update player z indexes ========");
+      var usersArray = [];
+      for (var i in users) {
+        if (users.hasOwnProperty(i)) {
+          usersArray.push(users[i]);
+        }
+      }
+      usersArray.sort(function (a, b) {
+        if (a.y < b.y) {
+          return -1;
+        }
+        if (a.y > b.y) {
+          return 1;
+        }
+        return 0;
+      });
+      usersArray.forEach(function (user) {
+        user.label.bringToTop();
+        user.sprite.bringToTop();
+      });
+    }
+
+    function updateUser(userData) {
+      console.log("=============== Update User ===========");
+      var user = users[userData.id];
+      if (user) {
+        user.score = userData.score;
+        user.direction = userData.direction;
+        moveUser(userData.id, userData.x, userData.y);
+
+      } else {
+        createUserSprite(userData);
+        //console.log(userData);
+      }
+
+    }
+
+    function removeCoin(coinData) {
+      console.log("=============== Remove Coin ==========");
+      var coinToRemove = coins[coinData.id];
+      if (coinToRemove) {
+        coinToRemove.sprite.destroy();
+        delete coins[coinToRemove.id];
+      }
+    }
+
+    function renderCoin(coinData) {
+      console.log("=============== Render Coin ==========");
+      if (coins[coinData.id]) {
+        coins[coinData.id].clientProcessed = Date.now();
+      } else {
+        var coin = coinData;
+        coins[coinData.id] = coin;
+        coin.sprite = createTexturedSprite({
+          texture: 'grass-' + (coinData.t || '1')
+        });
+        coin.sprite.x = coinData.x;
+        coin.sprite.y = coinData.y;
+        coin.clientProcessed = Date.now();
+      }
+    }
+
+    function joinWorld(playerName) {
+      console.log("=============== Join World ==========");
+      socket.emit('join', {
+        name: playerName,
+      }, function (err, playerData) {
+        playerId = playerData.id;
+        updateCellWatchers(playerData, 'cell-data', handleCellData);
+      });
+    }
+
+    function create() {
+      console.log("=============== Create ==========");
+      //TODO load the bots w/o user
+      background = game.add.tileSprite(0, 0, WORLD_WIDTH, WORLD_HEIGHT, 'background');
+      game.time.advancedTiming = true;
+      game.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+
+
+      var music = game.add.audio('cheezylofi');
+      music.loop = true;
+      music.play();
+
+      function removeAllUserSprites(player) {
+        console.log("=============== Remove All User Sprites ==========");
+        for (var i in users) {
+          if (users.hasOwnProperty(i)) {
+            removeUser(users[i]);
+          }
+        }
+        socket.emit('reRoute', player);
+      }
+
+      // if (socket.state == 'open') {
+      //   joinWorld();
+      // }
+
+      // For reconnect
+      // socket.on('connect', joinWorld);
+      // socket.on('disconnect', removeAllUserSprites(socket.player));
+    }
+
+    function storeUserData(token, userInfo){
+      console.log("=============== Store User Data ==========");
+      if (typeof(Storage) !== "undefined") {
+          // Code for localStorage/sessionStorage.
+          localStorage.setItem("userInfo", JSON.stringify(userInfo));
+          localStorage.setItem("token", JSON.stringify(token));
+      } else {
+          //TODO use cookies maybe?
+          console.log("No Web Storage support");
+          // Sorry! No Web Storage support..
+      }
+    }
+
+    var lastActionTime = 0;
+
+    function update() {
+      console.log("=============== Update ==========");
+      var didAction = false;
+      var playerOp = {};
+      if (keys.up.isDown) {
+        playerOp.u = 1;
+        didAction = true;
+      } else {
+        playerOp.u = 0;
+      }
+      if (keys.down.isDown) {
+        playerOp.d = 1;
+        didAction = true;
+      } else {
+        playerOp.d = 0;
+      }
+      if (keys.right.isDown) {
+        playerOp.r = 1;
+        didAction = true;
+      } else {
+        playerOp.r = 0;
+      }
+      if (keys.left.isDown) {
+        playerOp.l = 1;
+        didAction = true;
+      } else {
+        playerOp.l = 0;
+      }
+      if (keys.space.isDown) {
+        playerOp.s = 1;
+        didAction = true;
+      } else {
+        playerOp.s = 0;
+      }
+      if (didAction && Date.now() - lastActionTime >= USER_INPUT_INTERVAL) {
+        lastActionTime = Date.now();
+        // Send the player operations for the server to process.
+        socket.emit('action', playerOp);
+      }
+      //socket.on('disconnect', removeAllUserSprites(socket));
+
+      socket.subscribe('pong').watch(function (count) {
+        console.log('Ping: ', count);
+      });
+
+      socket.subscribe('kick').watch(function(id) {
+        console.log("kicked", id + socket.player.id);
+      });
+
+      // socket.on('kick', function(player) {
+      //   console.log("kicked", id + socket.player.id);
+      // });
+
+    }
+
+    function render() {
+      console.log("=============== Render ==========");
+      // console.log(users.length);
+      var now = Date.now();
+
+      if (ENVIRONMENT == 'dev') {
+        game.debug.text('FPS:   ' + game.time.fps, 2, 14, "#00FF00");
+        if (player) {
+          game.debug.text('Score: ' + player.score, 2, 30, "#00FF00");
+          //console.log();
+        }
+        if(king){
+          game.debug.text('King: ' + king.name , 2, 45, '#00FF00');
+        }
+        else {
+          game.debug.text('There is no king!', 2, 45, '#00FF00');
+        }
+
+      }
+
+      for (var i in users){
+        if (users.hasOwnProperty(i)) {
+          var curUser = users[i];
+          if (curUser.score > maxScore){
+            maxScore = curUser.score;
+            king = curUser;
+            game.debug.text('King: ' + king.name, 2, 45, '#00FF00');
+            //console.log(curUser.name);
+          }
+        }
+      }
+
+      for (var i in users) {
+        if (users.hasOwnProperty(i)) {
+          var curUser = users[i];
+          if (now - curUser.clientProcessed > PLAYER_INACTIVITY_TIMEOUT) {
+            removeUser(curUser);
+          }
+        }
+      }
+
+      for (var j in coins) {
+        if (coins.hasOwnProperty(j)) {
+          var curCoin = coins[j];
+          if (now - curCoin.clientProcessed > COIN_INACTIVITY_TIMEOUT) {
+            removeCoin(curCoin);
+          }
+        }
+      }
+    }
+
+    // function getNickname(){
+    //   // Generate a random name for the user.
+    //   // let userInfo = ;
+    //   // let token = ;
+    //   // storeUserData(token, userInfo);
+    //   // console.log("=========Token Info===========");
+    //   // console.log(token);
+    //   //
+    //   // console.log("=========== User Info ==========");
+    //   // console.log(userInfo);
+    //   return nickname + Math.floor(Math.random() * 9999);
+    // }
+    function setNickname(){
+      console.log("=============== Set Nickname ==========");
+      playerName = document.getElementById("nickname").value + Math.floor(Math.random() * 9999);
+      if(socket.state == 'open'){
+        joinWorld(playerName);
+      }
+      document.getElementById("entryContainer").classList.add('hide');
+      // console.log(playerName);
+    }
+
     </script>
   </body>
 </html>

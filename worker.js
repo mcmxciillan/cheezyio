@@ -15,7 +15,11 @@ var scCodecMinBin = require('./public/sc-codec-min-bin');
 var bodyParser = require('body-parser');
 
 var config = require('./config');
+var db = require('./database');
 var CellController = require('./cell');
+var routes = require('./routes');
+var cors = require('cors');
+var mongoose = require('mongoose');
 
 var WORLD_WIDTH = config.WORLD_WIDTH;
 var WORLD_HEIGHT = config.WORLD_HEIGHT;
@@ -65,7 +69,20 @@ module.exports.run = function (worker) {
 
   var environment = worker.options.environment;
   var serverWorkerId = worker.options.instanceId + ':' + worker.id;
+  // Connect To Database
+  var dbUrl = db.database;
+  mongoose.Promise = require('bluebird');
+  var options = {
+    socketTimeoutMS: 0,
+    keepAlive: true,
+    reconnectTries: 30
+  };
+  mongoose.connect(dbUrl, options);
 
+  mongoose.connection.on('connected', () => {
+    console.log("==================== DB CONNECTED =====================");
+    console.log("URL: "+dbUrl);
+  });
   var app = express();
   // var server = app.listen(8000);
   // var io = require('')
@@ -82,18 +99,23 @@ module.exports.run = function (worker) {
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use('/js', express.static('public'));
   app.use('/img', express.static('public/img'));
-    app.use('/music', express.static('public/music'));
+  app.use('/music', express.static('public/music'));
   //app.use(serveStatic(path.resolve(__dirname, 'public')));
   app.set('view engine', 'ejs');
+  app.use(cors());
+  //Initialize passport
+  // require('./config/passport')(passport);
+  app.use("", routes);
 
-  app.get('/', function(req, res) {
-    res.render('index');
-  });
-
-  app.post('/game', function(req, res) {
-    console.log("Routing");
-    res.render('game', { nickName: req.body.nickName});
-  });
+  // app.get('/', function(req, res) {
+  //   res.render('index');
+  // });
+  //
+  // app.post('/game', function(req, res) {
+  //   console.log("Routing");
+  //   //TODO load user info
+  //   res.render('game', { nickName: JSON.stringify(req.body.nickName)});
+  // });
 
   // Add GET /health-check express route
   healthChecker.attach(worker, app);
@@ -734,6 +756,10 @@ module.exports.run = function (worker) {
         environment: environment
       });
     });
+    //TODO Find a way to load all the bots
+    // socket.on('load', function(data, respond){
+    //
+    // });
 
     socket.on('join', function (playerOptions, respond) {
       var startingPos = getRandomPosition(PLAYER_DIAMETER, PLAYER_DIAMETER);
