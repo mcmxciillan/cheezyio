@@ -773,12 +773,14 @@ module.exports.run = function (worker) {
         y: startingPos.y,
         diam: PLAYER_DIAMETER,
         mass: PLAYER_MASS,
+        savedScore: 0,
         score: 0,
         killed: false
       };
 
       socket.player = stateManager.create(player);
-      // this.userManager.addUser(player);
+      // This needs to be changed
+      cellControllers[socket.player.tcid].createMouseHole(player); // I'm very proud of this line although who knows if it'll even work ~C~
 
       respond(null, player);
     });
@@ -799,6 +801,10 @@ module.exports.run = function (worker) {
 
     socket.on('disconnect', function () {
       if (socket.player) {
+        var mhManager = cellControllers[socket.player.tcid].mouseHoleManager;
+
+        // This line may have to check if the current cell even has any mouse holes to delete
+        mhManager.removeMouseHole(mhManager.mouseHoles[mhManager.mouseHoles.length-1]);
         stateManager.delete(socket.player);
       }
     });

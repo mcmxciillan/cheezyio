@@ -10,7 +10,6 @@ StateManager.prototype.create = function (state) {
     tcid: stateCellIndex, // Target cell index.
     type: state.type,
     create: state,
-    killed: false
   };
   if (state.swid != null) {
     stateRef.swid = state.swid;

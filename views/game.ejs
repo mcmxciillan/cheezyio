@@ -107,7 +107,7 @@
         </div>
       </div>
     </div>
-
+<!-- This is the start of the scoreboard
     <div id="scoreboardContainer" class="container">
       <table class="striped">
         <thead>
@@ -137,7 +137,7 @@
         </tbody>
       </table>
     </div>
-
+-->
     <script type="text/javascript">
 
       var socket = socketCluster.connect({
@@ -258,6 +258,9 @@
       game.load.image('grass-2', grassTextures[2]);
       game.load.image('grass-3', grassTextures[3]);
       game.load.image('grass-4', grassTextures[4]);
+
+      game.load.image('mousehole', 'testmousehole.png');
+
       game.load.audio('cheezylofi', 'music/cheezylofi.wav');
     }
 
@@ -396,6 +399,11 @@
       }
     }
 
+    function createMouseHoleSprite(options) {
+      console.log("~~~ CREATING MOUSE HOLE ~~~");
+
+    }
+
     function updatePlayerZIndexes() {
       console.log("======== Update player z indexes ========");
       var usersArray = [];
@@ -467,6 +475,8 @@
         playerId = playerData.id;
         updateCellWatchers(playerData, 'cell-data', handleCellData);
       });
+      console.log("=============== Creating Mouse Hole ==========");
+      // Put Mouse Hole Here
     }
 
     function create() {
@@ -490,14 +500,6 @@
         }
         socket.emit('reRoute', player);
       }
-
-      // if (socket.state == 'open') {
-      //   joinWorld();
-      // }
-
-      // For reconnect
-      // socket.on('connect', joinWorld);
-      // socket.on('disconnect', removeAllUserSprites(socket.player));
     }
 
     function storeUserData(token, userInfo){
@@ -556,13 +558,13 @@
       }
       //socket.on('disconnect', removeAllUserSprites(socket));
 
-      socket.subscribe('pong').watch(function (count) {
-        console.log('Ping: ', count);
-      });
+      // socket.subscribe('pong').watch(function (count) {
+      //   console.log('Ping: ', count);
+      // });
 
-      socket.subscribe('kick').watch(function(id) {
-        console.log("kicked", id + socket.player.id);
-      });
+      // socket.subscribe('kick').watch(function(id) {
+      //   console.log("kicked", id + socket.player.id);
+      // });
 
       // socket.on('kick', function(player) {
       //   console.log("kicked", id + socket.player.id);
@@ -578,6 +580,7 @@
       if (ENVIRONMENT == 'dev') {
         game.debug.text('FPS:   ' + game.time.fps, 2, 14, "#00FF00");
         if (player) {
+          game.debug.text('Saved Score: ' + player.savedScore, 2, 20, "#00FF00");
           game.debug.text('Score: ' + player.score, 2, 30, "#00FF00");
           //console.log();
         }
@@ -640,7 +643,6 @@
         joinWorld(playerName);
       }
       document.getElementById("entryContainer").classList.add('hide');
-      // console.log(playerName);
     }
 
     </script>

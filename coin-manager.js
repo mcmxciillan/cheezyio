@@ -63,7 +63,7 @@ CoinManager.prototype.generateRandomAvailablePosition = function (coinRadius) {
 CoinManager.prototype.addCoin = function (value, subtype, radius) {
   radius = radius || COIN_DEFAULT_RADIUS;
   var coinId = uuid.v4();
-  var validPosition = this.generateRandomAvailablePosition(radius);
+  var validPosition = this. (radius);
   if (validPosition) {
     var coin = {
       id: coinId,

@@ -52,6 +52,7 @@ var BotManager = require('./bot-manager').BotManager;
 var CoinManager = require('./coin-manager').CoinManager;
 var UserManager = require('./user-manager').UserManager;
 var StateManager = require('./state-manager').StateManager;
+var MouseHoleManager = require('./mouse-hole-manager').MouseHoleManager;
 
 // This controller will be instantiated once for each
 // cell in our world grid.
@@ -138,6 +139,11 @@ var CellController = function (options, util) {
     probRangeStart += coinType.probability;
   });
 
+  this.mouseHoleManager = new MouseHoleManager({
+    cellData: options.cellData,
+    cellBounds: options.cellBounds
+  });
+
   this.playerCompareFn = function (a, b) {
     if (a.id < b.id) {
       return -1;
@@ -164,6 +170,7 @@ CellController.prototype.run = function (cellData) {
   }
   var players = cellData.player;
   var coins = cellData.coin;
+  var mouseHoles = cellData.mouseHole; // This needs to be checked.
 
   // Sorting is important to achieve consistency across cells.
   var playerIds = Object.keys(players).sort(this.playerCompareFn);
@@ -175,6 +182,14 @@ CellController.prototype.run = function (cellData) {
 
   for (x in players){
     this.userManager.addUser(x);
+  }
+};
+
+CellController.prototype.createMouseHole = function(player) {
+
+  var mouseHole = this.MouseHoleManager.addMouseHole(player);
+  if (mouseHole) {
+    mouseHoles[mouseHole.id] = mouseHole;
   }
 };
 
@@ -341,6 +356,16 @@ CellController.prototype.applyPlayerOps = function (playerIds, players, coins) {
       delete player.coinOverlaps;
     }
 
+    if (player.mouseHoleOverlaps) {
+      player.mouseHoleOverlaps.forEach(function (mouseHole) {
+        if (self.testCircleCollision(player, mouseHole).collided) {
+          player.savedScore += player.score;
+          player.score = 0;
+        }
+      });
+      delete player.mouseHoleOverlaps;
+    }
+
     self.keepPlayerOnGrid(player);
   });
 };
@@ -430,8 +455,8 @@ CellController.prototype.resolvePlayerCollision = function (player, otherPlayer)
     if (playerOp) {
       if (playerOp.s == 1 && player.score > 1){
         if(otherPlayer.subtype == 'bot'){
-          player.score += (otherPlayer.score / 2);
-          otherPlayer.score = otherPlayer.score / 2;
+          player.score += otherPlayer.score;
+          otherPlayer.score = otherPlayer.score;
           this.botManager.removeBot(otherPlayer);
         } else {
           this.userManager.battle(player, otherPlayer);

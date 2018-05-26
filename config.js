@@ -54,6 +54,9 @@ module.exports = {
   COIN_DROP_INTERVAL: 400,
   COIN_MAX_COUNT: 200,
   COIN_PLAYER_NO_DROP_RADIUS: 80,
+
+  MOUSE_HOLE_NO_SPAWN_RADIUS: 50,
+  MOUSE_HOLE_MAX_COUNT: 25,
   // The probabilities need to add up to 1.
   COIN_TYPES: [
     {

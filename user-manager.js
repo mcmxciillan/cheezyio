@@ -3,7 +3,6 @@ var config = require('./config');
 var UserManager = function(){
   this.users = [];
   this.numUsers = 0;
-  //this.king = 0;
 };
 
 UserManager.prototype.addUser = function(user) {
