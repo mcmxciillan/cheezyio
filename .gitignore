@@ -25,3 +25,8 @@ Thumbs.db
 # Agent
 .agent/
 !.agent/workflows/
+
+.vscode
+playwright-report
+test-results
+lint_log.txt

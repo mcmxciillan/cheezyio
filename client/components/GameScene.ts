@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { io, Socket } from 'socket.io-client';
 import parser from 'socket.io-msgpack-parser';
 import { AudioManager } from '../audio/AudioManager';
@@ -143,10 +144,17 @@ export class GameScene extends Phaser.Scene {
     // --- Juice: Particle Managers ---
     this.createParticleSystems();
 
-    // Listen for Kill Feed
-    this.socket.on('playerKilled', (data: { killer: string; victim: string }) => {
-      this.game.events.emit('playerKilled', data);
-    });
+    // Listen for Kill Feed & Death Explosions
+  this.socket.on('playerKilled', (data: { killer: string; victim: string; x?: number; y?: number }) => {
+    if (data.x !== undefined && data.y !== undefined) {
+       this.explosionEmitter.explode(20, data.x, data.y);
+       // Play sound?
+       const isMe = data.victim === (this.registry.get('username') || 'Anonymous');
+       // Actually username isn't unique ID. 
+       // We don't have ID here easily unless passed. Assumed handled by gameOver event for self.
+    }
+    this.game.events.emit('playerKilled', data);
+  });
 
     // Listen for Chat
     this.socket.on('chat', (msg: any) => {
@@ -590,18 +598,9 @@ export class GameScene extends Phaser.Scene {
       AudioManager.getInstance().stopBoost(); // Ensure it stops if dead/spectating
     }
 
-    // Remove disconnected players (and play DEATH VISUALS)
+    // Remove disconnected/out-of-view players (Silent Removal for AOI)
     Object.keys(this.players).forEach((id) => {
       if (!serverPlayers[id]) {
-        // Play Death Explosion
-        this.explosionEmitter.explode(20, this.players[id].x, this.players[id].y);
-        AudioManager.getInstance().playDie();
-
-        // Screen Shake if close or is me (though if me, camera might follow null, handle carefully)
-        if (id === this.myId) {
-          this.cameras.main.shake(500, 0.02);
-          AudioManager.getInstance().stopBoost();
-        }
 
         this.players[id].destroy();
         delete this.players[id];
@@ -661,6 +660,7 @@ export class GameScene extends Phaser.Scene {
         if (pData.type === 'speed') symbol = '⚡';
         if (pData.type === 'ghost') symbol = '👻';
         if (pData.type === 'magnet') symbol = '🧲';
+        if (pData.type === 'ninja') symbol = '🥷';
 
         const text = this.add.text(pData.x, pData.y, symbol, { font: '40px Arial' }).setOrigin(0.5);
 

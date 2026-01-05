@@ -46,7 +46,10 @@
     "dev:server": "nodemon --exec \"node -r ts-node/register\" src/server.ts",
     "dev:client": "cd client && pnpm dev",
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"pnpm dev:server\" \"pnpm dev:client\"",
-    "build": "tsc && cd client && pnpm install && pnpm build"
+    "build": "tsc && cd client && pnpm install && pnpm build",
+    "scan": "docker run --rm --env-file .env -v \"$(pwd):/usr/src\" sonarsource/sonar-scanner-cli",
+    "test": "vitest",
+    "test:e2e": "playwright test"
   },
   "repository": {
     "type": "git",
@@ -60,6 +63,7 @@
   },
   "homepage": "https://github.com/mcmxciillan/cheezyio#readme",
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -69,6 +73,7 @@
     "concurrently": "^9.2.1",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }

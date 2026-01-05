@@ -11,7 +11,7 @@ const CHEESE_COUNT = 200;
 const TARGET_PLAYERS = 40;
 class GameManager {
     io;
-    roomId; // Expose for manager
+    roomId;
     players = {};
     cheese = {};
     powerups = {};
@@ -21,6 +21,49 @@ class GameManager {
     WORLD_SIZE = 2000;
     MAX_CHEESE = 100;
     MIN_PLAYER_RADIUS = 20;
+    // Spatial Hashing
+    CELL_SIZE = 1000; // 1000x1000 cells (Large enough for AOI Viewport)
+    grid = new Map();
+    getCellKey(x, y) {
+        return `${Math.floor(x / this.CELL_SIZE)},${Math.floor(y / this.CELL_SIZE)}`;
+    }
+    updateGrid() {
+        this.grid.clear();
+        Object.values(this.players).forEach(p => {
+            const key = this.getCellKey(p.x, p.y);
+            if (!this.grid.has(key))
+                this.grid.set(key, []);
+            this.grid.get(key).push(p.id);
+        });
+    }
+    getNearbyPlayers(x, y) {
+        const keys = [
+            this.getCellKey(x, y),
+            this.getCellKey(x + this.CELL_SIZE, y),
+            this.getCellKey(x - this.CELL_SIZE, y),
+            this.getCellKey(x, y + this.CELL_SIZE),
+            this.getCellKey(x, y - this.CELL_SIZE),
+            this.getCellKey(x + this.CELL_SIZE, y + this.CELL_SIZE),
+            this.getCellKey(x - this.CELL_SIZE, y + this.CELL_SIZE),
+            this.getCellKey(x + this.CELL_SIZE, y - this.CELL_SIZE),
+            this.getCellKey(x - this.CELL_SIZE, y - this.CELL_SIZE)
+        ];
+        const res = [];
+        const seen = new Set();
+        keys.forEach(k => {
+            const ids = this.grid.get(k);
+            if (ids) {
+                ids.forEach(id => {
+                    if (!seen.has(id)) {
+                        seen.add(id);
+                        if (this.players[id])
+                            res.push(this.players[id]);
+                    }
+                });
+            }
+        });
+        return res;
+    }
     constructor(io, roomId) {
         this.io = io;
         this.roomId = roomId;
@@ -86,12 +129,14 @@ class GameManager {
     addPlayer(id, name, startScore = 0) {
         const skins = ['bmouse', 'gmouse', 'wmouse'];
         const skin = skins[Math.floor(Math.random() * skins.length)];
+        // Security: Sanitize Name (Alphanumeric + space/dash/underscore only)
+        const safeName = (name || '').replace(/[^a-zA-Z0-9 _-]/g, '').trim().substring(0, 15) || `Guest-${id.substr(0, 4)}`;
         this.players[id] = {
             id,
             x: Math.random() * WORLD_WIDTH,
             y: Math.random() * WORLD_HEIGHT,
             score: startScore,
-            name: name.substring(0, 15) || `Guest-${id.substr(0, 4)}`,
+            name: safeName,
             boosting: false,
             isBot: false,
             rotation: 0,
@@ -102,6 +147,8 @@ class GameManager {
             vy: 0,
             activeEffects: {}
         };
+        // Explicitly update score for client (UI Reset)
+        this.io.to(id).emit('updateScore', startScore);
     }
     removePlayer(id) {
         // If it was a bot, maybe respawn one immediately? 
@@ -117,11 +164,19 @@ class GameManager {
         // Let's stick to Object.keys(this.players).length to keep performance limits safe.
         return Object.keys(this.players).length;
     }
+    // Public Accessor for Tests/Debug
+    getPlayer(id) {
+        return this.players[id];
+    }
     handlePlayerAction(id, action) {
         const player = this.players[id];
         if (player && !player.isBot) {
-            player.rotation = action.rotation;
-            player.boosting = action.boost;
+            // Security: Input Validation
+            if (typeof action.rotation === 'number' && isFinite(action.rotation)) {
+                player.rotation = action.rotation;
+            }
+            // Only allow boosting if score > 0
+            player.boosting = !!action.boost && player.score > 0;
         }
     }
     // Handle Chat
@@ -129,8 +184,8 @@ class GameManager {
         const player = this.players[id];
         if (!player)
             return;
-        // Rate limit / Spam protection could go here
-        const cleanMessage = message.substring(0, 50); // Max 50 chars
+        // Security: Sanitize HTML to prevent XSS (if client uses innerHTML)
+        const cleanMessage = (message || '').substring(0, 50).replace(/</g, "&lt;").replace(/>/g, "&gt;");
         if (cleanMessage.trim().length > 0) {
             this.io.to(this.roomId).emit('chat', {
                 id: Math.random().toString(36).substr(2, 9),
@@ -190,8 +245,9 @@ class GameManager {
             let avoidX = 0;
             let avoidY = 0;
             let avoidCount = 0;
-            // Look for threats
-            Object.values(this.players).forEach(other => {
+            // Look for threats (Optimized with Spatial Hash)
+            const nearbyPlayers = this.getNearbyPlayers(p.x, p.y);
+            nearbyPlayers.forEach(other => {
                 if (other.id === p.id)
                     return;
                 // Ghost Logic: Bot ignores ghosted players
@@ -231,6 +287,10 @@ class GameManager {
                 });
             }
             // Look for Cheese if no player target
+            // Note: Cheese spatial hashing is harder (too many items), 
+            // but we can limit check count or just check random/nearest.
+            // For now, simple loop is okay if cheese count is low (100). 
+            // If cheese > 500, we need grid for cheese too.
             if (!hasTarget) {
                 let minDist = Infinity;
                 Object.values(this.cheese).forEach(c => {
@@ -301,6 +361,15 @@ class GameManager {
         });
     }
     managePopulation() {
+        const humanCount = Object.values(this.players).filter(p => !p.isBot).length;
+        // Cloud Cost Optimization: No humans = No bots
+        if (humanCount === 0) {
+            const botIds = Object.keys(this.players).filter(id => this.players[id].isBot);
+            if (botIds.length > 0) {
+                botIds.forEach(id => delete this.players[id]);
+            }
+            return;
+        }
         const currentCount = Object.keys(this.players).length;
         if (currentCount < TARGET_PLAYERS) {
             this.addBot();
@@ -316,6 +385,7 @@ class GameManager {
     update(dt) {
         // 0. Manage Population & AI
         this.managePopulation();
+        this.updateGrid(); // Update Spatial Hash
         this.updateBots();
         this.replenishCheese();
         this.replenishPowerUps(); // Check for spawns
@@ -326,12 +396,14 @@ class GameManager {
             player.vy *= FRICTION;
             // Apply Input Acceleration (for Human Players)
             // Bots already apply acceleration in updateBots, so skip them to avoid double speed
-            // Apply Input Acceleration (for Human Players)
-            // Bots already apply acceleration in updateBots, so skip them to avoid double speed
             if (!player.isBot) {
+                // Force stop boosting if no mass
+                if (player.score <= 0) {
+                    player.boosting = false;
+                }
                 let acceleration = PLAYER_SPEED * Math.sqrt(INITIAL_RADIUS / player.radius);
                 if (player.boosting && player.score > 0) {
-                    acceleration *= 1.5; // Apply boost to acceleration too!
+                    acceleration *= 1.8; // Apply boost to acceleration too!
                 }
                 player.vx += Math.cos(player.rotation) * acceleration;
                 player.vy += Math.sin(player.rotation) * acceleration;
@@ -350,7 +422,7 @@ class GameManager {
             let maxSpeed = MAX_SPEED * Math.pow(INITIAL_RADIUS / player.radius, 0.1);
             // Boost increases cap slightly, BUT ONLY IF SCORE > 0
             if (player.boosting && player.score > 0) {
-                maxSpeed *= 1.5;
+                maxSpeed *= 1.8;
             }
             // Apply Speed PowerUp
             if (player.activeEffects?.speed && player.activeEffects.speed > Date.now()) {
@@ -377,15 +449,39 @@ class GameManager {
                     }
                 });
             }
-            // REMOVED: Handle Boosting Cost (Crumb Trail)
-            // Boosting no longer costs score.
+            // Handle Boosting Cost (Crumb Trail)
+            if (player.boosting && player.score > 0) {
+                const now = Date.now();
+                if (now - player.lastBoostTime > 100) { // Costs 1 mass every 100ms
+                    player.score -= 1;
+                    player.radius = Math.min(200, INITIAL_RADIUS + Math.sqrt(player.score) * 4);
+                    player.lastBoostTime = now;
+                    // Spawn Crumb behind player
+                    // Position: Behind player based on rotation
+                    const angle = player.rotation + Math.PI; // 180 deg (behind)
+                    const dist = player.radius + 10;
+                    const cx = player.x + Math.cos(angle) * dist;
+                    const cy = player.y + Math.sin(angle) * dist;
+                    const id = Math.random().toString(36).substr(2, 9);
+                    this.cheese[id] = {
+                        id,
+                        x: Math.max(0, Math.min(WORLD_WIDTH, cx)),
+                        y: Math.max(0, Math.min(WORLD_HEIGHT, cy)),
+                        value: 1,
+                        type: 'crumbs'
+                    };
+                    this.io.to(player.id).emit('updateScore', player.score);
+                }
+            }
             // Update Position
             player.x += player.vx;
             player.y += player.vy;
             // World Boundaries
             player.x = Math.max(0, Math.min(WORLD_WIDTH, player.x));
             player.y = Math.max(0, Math.min(WORLD_HEIGHT, player.y));
-            // 2. Collision with Cheese
+            // 2. Collision with Cheese (Keep O(N*C) for now, or optimize if needed)
+            // Since cheese is static and players move, and cheese count is smallish (100-200),
+            // we can skip spatial hash for cheese for now unless requested.
             Object.values(this.cheese).forEach(c => {
                 const dx = player.x - c.x;
                 const dy = player.y - c.y;
@@ -423,8 +519,6 @@ class GameManager {
                     else if (p.type === 'ninja') {
                         player.activeEffects.ninja = now + duration;
                         // Initialize Clones
-                        // Randomly assign real player position: 0=Left, 1=Center, 2=Right
-                        // Actually let's simplify: 0=Left (-45deg), 1=Center (0deg), 2=Right (+45deg) relative to heading
                         const formationIdx = Math.floor(Math.random() * 3);
                         player.ninjaState = {
                             formationIdx,
@@ -435,80 +529,74 @@ class GameManager {
                 }
             });
         });
-        // 3. Player vs Player Collision (Eat smaller players)
-        // Refactored to support Shadow Clones (Multiple Hitboxes)
+        // 3. Player vs Player Collision (Optimized with Spatial Hash)
+        // We sort by size to ensure largest players eat first
         const sortedPlayers = Object.values(this.players).sort((a, b) => b.radius - a.radius);
-        for (let i = 0; i < sortedPlayers.length; i++) {
-            let gotoNextPair = false;
-            for (let j = i + 1; j < sortedPlayers.length; j++) {
-                const p1 = sortedPlayers[i];
-                const p2 = sortedPlayers[j];
-                // Ignore if either turned invalid (e.g. eaten in same tick)
-                if (!this.players[p1.id] || !this.players[p2.id])
+        // Optimized O(N) Loop using Spatial Hash
+        for (const p1 of sortedPlayers) {
+            // If p1 was eaten in a previous iteration, skip
+            if (!this.players[p1.id])
+                continue;
+            // Get only nearby neighbors
+            const nearby = this.getNearbyPlayers(p1.x, p1.y);
+            for (const p2 of nearby) {
+                // Skip self
+                if (p1.id === p2.id)
                     continue;
+                // Skip if P2 already eaten
+                if (!this.players[p2.id])
+                    continue;
+                // Note: In O(N^2) we did inner loop j=i+1 to avoid double checks.
+                // Here, strictly check Collision logic again?
+                // Since p1 is sorted descending, we mainly care if p1 eats p2.
+                // If p2 is also big, and p2 eats p1? 
+                // Logic below checks "h1.radius <= h2.radius * 1.1 continue". 
+                // Since p1 is generally bigger (sorted), p1 likely triggers the eat.
+                // But Spatial Hash returns everyone. P1 vs P2, and later P2 vs P1.
+                // We must rely on the radius check to validly allow eating.
+                // Reuse the hitboxes logic
                 const hitboxes1 = this.getPlayerHitboxes(p1);
                 const hitboxes2 = this.getPlayerHitboxes(p2);
                 for (const h1 of hitboxes1) {
                     for (const h2 of hitboxes2) {
-                        // Check if target is already invalid (e.g. clone popped)
                         if (h1.isClone && !p1.ninjaState?.activeClones[h1.index])
                             continue;
                         if (h2.isClone && !p2.ninjaState?.activeClones[h2.index])
                             continue;
-                        // Optimization: Radius check
                         if (h1.radius <= h2.radius * 1.1)
-                            continue; // h1 must be bigger to eat h2
+                            continue; // h1 must be bigger
                         const dx = h1.x - h2.x;
                         const dy = h1.y - h2.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist < h1.radius) {
                             // Collision! H1 eats H2
-                            // Case A: H2 is a CLONE
                             if (h2.isClone) {
-                                // Pop the clone!
                                 if (p2.ninjaState) {
                                     p2.ninjaState.activeClones[h2.index] = false;
-                                    // Juice: Emit 'poof' event? Or state change handles it?
-                                    // Let's rely on state change. Client will see clone disappear.
                                 }
-                                // No score gain, no death. Just decoy destroyed.
                                 continue;
                             }
-                            // Case B: H2 is REAL
                             if (!h2.isClone) {
-                                // Do I eat them? 
-                                // Only if I am REAL. A Clone cannot eat a real player (it's just a shadow).
                                 if (h1.isClone) {
-                                    // Clone touched real player. 
-                                    // If Clone is bigger, it should just pass through or maybe pop?
-                                    // User says: "if the user [Real] is larger than the colliding player and a shadow clone collides with them, they also should not die and the shadow clone should disappear"
-                                    // So if Real(Small) touches Clone(Big), nothing happens?
-                                    // Wait, h1.radius > h2.radius * 1.1 check passed.
-                                    // So H1 (Clone) is BIG, H2 (Real) is SMALL.
-                                    // Clone should NOT eat Real.
-                                    // Should Clone pop? "shadow clone collides... shadow clone should disappear"
                                     if (p1.ninjaState) {
                                         p1.ninjaState.activeClones[h1.index] = false;
                                     }
                                     continue;
                                 }
-                                // Both REAL. H1(Real) eats H2(Real).
+                                // Real eats Real
                                 this.handleEatPlayer(p1, p2);
-                                // Break inner loops since P2 is dead
-                                gotoNextPair = true;
+                                // P2 is dead, break its loops? 
+                                // We continue the inner loop (h2 loop) but p2 is now deleted from players,
+                                // so next check "if (!this.players[p2.id]) continue" will catch it.
+                                break;
                             }
                         }
                     }
-                    if (gotoNextPair)
-                        break;
-                }
-                if (gotoNextPair) {
-                    gotoNextPair = false; // Reset for next i,j
-                    continue;
                 }
             }
         }
-        // ...
+        // Broadcast state to clients
+        this.broadcastState();
     }
     handleEatPlayer(p1, p2) {
         // P1 eats P2
@@ -522,7 +610,9 @@ class GameManager {
         // Kill Feed Event
         this.io.to(this.roomId).emit('playerKilled', {
             killer: p1.name,
-            victim: p2.name
+            victim: p2.name,
+            x: p2.x,
+            y: p2.y
         });
         // 3. Handle Death (No Auto-Respawn)
         // Store stats if worth saving (User Request: "if they are over 100 score")
@@ -679,44 +769,89 @@ class GameManager {
     }
     broadcastState() {
         const now = Date.now();
-        const publicPlayers = {};
-        const ghostIds = [];
-        // 1. Separate Ghosts from Public
+        // 1. Prepare Compressed Full State (for Spectators / Fallback)
+        const compressedPlayers = {};
+        const compressedCheese = {};
+        const allPlayerIds = []; // All players (human and bot) who will receive a direct AOI update
         Object.values(this.players).forEach(p => {
-            if (p.activeEffects?.ghost && p.activeEffects.ghost > now) {
-                ghostIds.push(p.id);
-            }
-            else {
-                publicPlayers[p.id] = p;
+            allPlayerIds.push(p.id);
+            compressedPlayers[p.id] = {
+                id: p.id,
+                x: Math.round(p.x * 10) / 10,
+                y: Math.round(p.y * 10) / 10,
+                rotation: Math.round(p.rotation * 100) / 100,
+                radius: Math.round(p.radius),
+                skin: p.skin,
+                name: p.name,
+                score: p.score,
+                isBot: p.isBot,
+                boosting: p.boosting,
+                activeEffects: p.activeEffects,
+                ninjaState: p.ninjaState
+            };
+        });
+        // Compress Cheese (Could opt-in to AOI for cheese too, but kept global for simplicity unless massive)
+        Object.values(this.cheese).forEach(c => {
+            compressedCheese[c.id] = {
+                id: c.id,
+                x: Math.round(c.x),
+                y: Math.round(c.y),
+                value: c.value,
+                type: c.type
+            };
+        });
+        const fullPublicPayload = {
+            players: {},
+            cheese: compressedCheese,
+            powerups: this.powerups
+        };
+        // Filter Ghosts from Public Payload (for spectators)
+        Object.keys(compressedPlayers).forEach(id => {
+            const p = this.players[id];
+            if (!p.activeEffects?.ghost || p.activeEffects.ghost < now) {
+                fullPublicPayload.players[id] = compressedPlayers[id];
             }
         });
-        // 2. Optimization: If no ghosts, broadcast global state (Fast Path)
-        if (ghostIds.length === 0) {
-            this.io.to(this.roomId).emit('state', {
-                players: this.players,
-                cheese: this.cheese,
-                powerups: this.powerups
-            });
-            return;
-        }
-        // 3. Slow Path: Per-player custom view
+        // 2. Send AOI Updates to Active Players
+        const activeHumanIds = [];
         Object.values(this.players).forEach(p => {
-            let viewPlayers = publicPlayers;
-            // If I am a ghost, I need to see myself
-            if (ghostIds.includes(p.id)) {
-                viewPlayers = { ...publicPlayers, [p.id]: p };
-            }
-            // Note: Creating a new object per player is O(N), total O(N^2)
-            // With N=40, this is ~1600 props, perfectly fine.
+            if (p.isBot)
+                return; // Bots don't need updates
+            activeHumanIds.push(p.id);
+            // Get Visible Players (AOI) via Spatial Hash
+            // Note: getNearbyPlayers returns Player objects. We need mapped Compressed objects.
+            const nearby = this.getNearbyPlayers(p.x, p.y);
+            const visiblePlayers = {};
+            nearby.forEach(other => {
+                // Ghost Logic: Don't show invisible ghosts (unless it's me)
+                if (other.id !== p.id && other.activeEffects?.ghost && other.activeEffects.ghost > now) {
+                    return;
+                }
+                // Add to visible set
+                visiblePlayers[other.id] = compressedPlayers[other.id];
+            });
+            // Ensure Self is always included
+            visiblePlayers[p.id] = compressedPlayers[p.id];
+            // Optimize Cheese? For now send all.
+            // Optional: Filter cheese by distance here if payload is too big.
             this.io.to(p.id).emit('state', {
-                players: viewPlayers,
-                cheese: this.cheese,
-                powerups: this.powerups
+                players: visiblePlayers,
+                cheese: compressedCheese, // Sending all cheese for now
+                powerups: this.powerups // Sending all powerups for now
             });
         });
+        // 3. Send Full Public State to Spectators (Everyone EXCEPT active human players)
+        // This covers anyone in the room who didn't get a direct AOI message (e.g., spectators)
+        if (activeHumanIds.length > 0) {
+            this.io.to(this.roomId).except(activeHumanIds).emit('state', fullPublicPayload);
+        }
+        else {
+            // If no active human players, send full public payload to everyone in the room
+            this.io.to(this.roomId).emit('state', fullPublicPayload);
+        }
     }
-    spawnCheeseExplosion(x, y, totalValue) {
-        let remaining = totalValue;
+    spawnCheeseExplosion(x, y, score) {
+        let remaining = score;
         const maxItems = 40; // Prevent server lag from massive drops
         let count = 0;
         // Greedy breakdown: Wheel(5) -> Block(3) -> Wedge(2) -> Crumb(1)

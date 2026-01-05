@@ -4,14 +4,22 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 
-import path from 'path';
+import path from 'node:path';
 
 const app = express();
 
 app.use(compression());
-app.use(cors());
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
+}));
 app.use(helmet({
-  contentSecurityPolicy: false, // Prepare for static assets issues if strict
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "img-src": ["'self'", "data:", "blob:"],
+      "connect-src": ["'self'", "ws:", "wss:"], // Allow WebSocket
+    }
+  },
 }));
 app.use(morgan('dev'));
 app.use(express.json());

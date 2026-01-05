@@ -17,6 +17,7 @@ export class AudioManager {
 
     private constructor() {
         // Initialize AudioContext
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
         this.ctx = new AudioContextClass();
         
@@ -59,10 +60,9 @@ export class AudioManager {
             const arrayBuffer = await response.arrayBuffer();
             this.bgmBuffer = await this.ctx.decodeAudioData(arrayBuffer);
             this.playMusic();
-        } catch (e) {
-            console.error('Audio decoding failed. Is the file supported?', e);
-        }
-    }
+        } catch {
+        console.warn('Audio playback failed (interaction needed)');
+      }  }
     
     public playMusic() {
         if (!this.bgmBuffer) return;
@@ -70,7 +70,7 @@ export class AudioManager {
         
         // Stop existing if any (to prevent overlap usually, though we want loop)
         if (this.bgmSource) {
-            try { this.bgmSource.stop(); } catch(e) {}
+            try { this.bgmSource.stop(); } catch {}
         }
         
         this.bgmSource = this.ctx.createBufferSource();

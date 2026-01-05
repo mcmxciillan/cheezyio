@@ -1,98 +1,84 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
+import * as Phaser from 'phaser';
 
 interface DeathScreenProps {
-  finalScore: number;
-  killer: string;
-  canRevive: boolean;
-  onRespawn: (type: 'normal' | 'ad') => void;
-  onSpectate: () => void;
+    game: Phaser.Game | null;
+    onQuit: () => void;
 }
 
-export default function DeathScreen({ finalScore, killer, canRevive, onRespawn, onSpectate }: DeathScreenProps) {
-  const [adTimer, setAdTimer] = useState(0);
-  const [showingAd, setShowingAd] = useState(false);
+export default function DeathScreen({ game, onQuit }: DeathScreenProps) {
+    const [isVisible, setIsVisible] = useState(false);
+    const [stats, setStats] = useState<{ finalScore: number; killer: string; canRevive: boolean } | null>(null);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (showingAd && adTimer > 0) {
-      interval = setInterval(() => setAdTimer((p) => p - 1), 1000);
-    } else if (showingAd && adTimer === 0) {
-      // Ad finished
-      onRespawn('ad');
-    }
-    return () => clearInterval(interval);
-  }, [showingAd, adTimer, onRespawn]);
+    useEffect(() => {
+        if (!game) return;
 
-  const handleWatchAd = () => {
-    setShowingAd(true);
-    setAdTimer(3); // 3-second fake ad
-  };
+        const onGameOver = (data: { finalScore: number; killer: string; canRevive: boolean }) => {
+            setStats(data);
+            setIsVisible(true);
+        };
 
-  if (showingAd) {
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black">
-        <div className="text-white text-4xl font-bold animate-pulse mb-8">
-          ADVERTISEMENT
-        </div>
-        <div className="text-gray-400 text-xl">
-          Reward in {adTimer}s...
-        </div>
-        <div className="mt-8 p-4 border border-gray-700 rounded bg-gray-900 text-gray-500 text-sm max-w-md text-center">
-         [Mock Ad] Imagine a cool video here about CheezyIO Premium.
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-      <div className="bg-gray-900 border-2 border-red-900/50 p-8 rounded-2xl max-w-md w-full shadow-2xl relative text-center">
+        game.events.on('gameOver', onGameOver);
         
-        <div className="mb-6">
-            <h2 className="text-5xl font-black text-red-500 mb-2 drop-shadow-lg tracking-wider">
-                WASTED
-            </h2>
-            <div className="text-gray-400 text-sm uppercase tracking-widest">
-                Eaten by <span className="text-white font-bold">{killer}</span>
-            </div>
-        </div>
+        // Hide on respawn request success (handled by game logic, but we can listen for reset?)
+        // Or just self-manage.
+        
+        return () => {
+            game.events.off('gameOver', onGameOver);
+        };
+    }, [game]);
 
-        <div className="bg-gray-800/50 rounded-xl p-6 mb-8 border border-white/5">
-            <div className="text-gray-400 text-xs uppercase mb-1">Final Mass</div>
-            <div className="text-4xl font-mono font-bold text-yellow-400">
-                {finalScore.toLocaleString()}
-            </div>
-        </div>
+    const handleRespawn = () => {
+        if (game) {
+            game.events.emit('respawn');
+            setIsVisible(false);
+        }
+    };
 
-        <div className="space-y-3">
-            {canRevive && (
-                <button 
-                    onClick={handleWatchAd}
-                    className="w-full py-4 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold rounded-xl shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2 group border-b-4 border-green-800 active:border-b-0 active:translate-y-1"
-                >
-                    <span className="text-xl">📺</span>
-                    <div className="text-left leading-tight">
-                        <div className="text-sm opacity-90">Second Chance</div>
-                        <div className="text-xs font-normal opacity-75">Recover 50% Mass</div>
+    if (!isVisible || !stats) return null;
+
+    return (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
+            <div className="bg-gray-900 border-2 border-red-500/50 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
+                
+                <h2 className="text-5xl font-black text-red-500 mb-2 drop-shadow-lg uppercase tracking-wider">Wasted</h2>
+                <div className="text-gray-400 text-sm mb-6 uppercase tracking-widest">Game Over</div>
+                
+                <div className="mb-8 space-y-4">
+                    <div className="bg-black/40 p-4 rounded-xl border border-white/5">
+                        <div className="text-gray-400 text-xs uppercase mb-1">Killed By</div>
+                        <div className="text-2xl font-bold text-white mb-3 text-red-400">{stats.killer}</div>
+                        
+                        <div className="border-t border-white/10 my-3"></div>
+                        
+                        <div className="text-gray-400 text-xs uppercase mb-1">Final Mass</div>
+                        <div className="text-4xl font-mono font-bold text-yellow-400">{Math.floor(stats.finalScore)}</div>
                     </div>
-                </button>
-            )}
+                </div>
 
-            <button 
-                onClick={() => onRespawn('normal')}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition border-b-4 border-blue-800 active:border-b-0 active:translate-y-1"
-            >
-                Respawn (Fresh Start)
-            </button>
-
-            <button 
-                onClick={onSpectate}
-                className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold rounded-xl transition"
-            >
-                Spectate
-            </button>
+                <div className="space-y-3">
+                    <button 
+                        onClick={handleRespawn}
+                        className="w-full py-4 bg-yellow-500 text-black font-bold text-xl rounded-xl hover:bg-yellow-400 transition-all transform hover:scale-[1.02] shadow-lg shadow-yellow-500/20 active:scale-95"
+                    >
+                        Respawn
+                    </button>
+                    
+                    <button 
+                        onClick={() => { setIsVisible(false); onQuit(); }}
+                        className="w-full py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all border border-white/10"
+                    >
+                        Main Menu
+                    </button>
+                </div>
+            </div>
+            <style jsx>{`
+                .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+                @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+            `}</style>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
