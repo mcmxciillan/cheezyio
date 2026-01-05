@@ -42,7 +42,7 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     // Backgrounds
-    this.load.image('background-default', '/assets/background-texture.png');
+    // this.load.image('background-default', '/assets/background-texture.png'); // DELETED
     this.load.image('checkers-dark', '/assets/checkers-dark.png');
     this.load.image('checkers-darkest', '/assets/checkers-darkest.png');
     this.load.image('checkers-flat', '/assets/checkers-flat.png');
