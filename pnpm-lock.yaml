@@ -63,8 +63,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.1
       phaser:
-        specifier: ^3.90.0
-        version: 3.90.0
+        specifier: 3.87.0
+        version: 3.87.0
       rbush:
         specifier: 2.0.1
         version: 2.0.1
@@ -1199,8 +1199,8 @@ packages:
   pause@0.0.1:
     resolution: {integrity: sha512-KG8UEiEVkR3wGEb4m5yZkVCzigAD+cVEJck2CzYZO37ZGJfctvVptVO192MwrtPhzONn6go8ylnOdMhKqi4nfg==}
 
-  phaser@3.90.0:
-    resolution: {integrity: sha512-/cziz/5ZIn02uDkC9RzN8VF9x3Gs3XdFFf9nkiMEQT3p7hQlWuyjy4QWosU802qqno2YSLn2BfqwOKLv/sSVfQ==}
+  phaser@3.87.0:
+    resolution: {integrity: sha512-AyI1b3T5fp05gzf6WUmu2FNqaZL+Y7w88yBRLf7YZXF9bncUSHpnDrupnTGoPqy/RKHRLBcay7zWeqQ2wiMWcw==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -2599,7 +2599,7 @@ snapshots:
 
   pause@0.0.1: {}
 
-  phaser@3.90.0:
+  phaser@3.87.0:
     dependencies:
       eventemitter3: 5.0.1
 

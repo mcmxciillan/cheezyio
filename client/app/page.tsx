@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import LandingPage from '../components/LandingPage';
 import { getRandomPun } from '../utils/puns';
-
-const Game = dynamic(() => import('../components/Game'), { ssr: false });
+const LandingPage = dynamic(() => import('../components/LandingPage'), { ssr: false });
+const Game = dynamic(() => import('../components/Game').then(mod => mod.default), { 
+  ssr: false,
+  loading: () => <div className="text-white text-center p-4">Loading Game...</div>
+});
 
 export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);

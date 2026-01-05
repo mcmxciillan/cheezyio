@@ -21,10 +21,14 @@ export default function Game({ username, isSpectating, onQuit }: GameProps) {
     if (typeof window === 'undefined') return;
     if (gameRef.current) return;
 
+    // Safeguard against 0 dimensions (can cause WebGL FBO errors)
+    const width = window.innerWidth > 0 ? window.innerWidth : 1024;
+    const height = window.innerHeight > 0 ? window.innerHeight : 768;
+
     const config: Phaser.Types.Core.GameConfig = {
-      type: Phaser.AUTO,
-      width: window.innerWidth,
-      height: window.innerHeight,
+      type: Phaser.CANVAS, // Force Canvas to avoid WebGL "Incomplete Attachment" errors
+      width,
+      height,
       parent: 'phaser-game',
       backgroundColor: '#1a1a1a',
       physics: {
@@ -53,7 +57,11 @@ export default function Game({ username, isSpectating, onQuit }: GameProps) {
     setGameInstance(game); 
 
     const handleResize = () => {
-      game.scale.resize(window.innerWidth, window.innerHeight);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (w > 0 && h > 0) {
+        game.scale.resize(w, h);
+      }
     };
     window.addEventListener('resize', handleResize);
 
@@ -67,10 +75,10 @@ export default function Game({ username, isSpectating, onQuit }: GameProps) {
   }, []); // Run once on mount. Ideally should handle prop changes, but full reload is safer for Phaser.
 
   return (
-    <div className="relative w-full h-full">
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-black">
       <div
         id="phaser-game"
-        className="absolute inset-0 z-0 overflow-hidden"
+        className="absolute inset-0 z-0"
       />
       
       {/* UI Overlays */}
