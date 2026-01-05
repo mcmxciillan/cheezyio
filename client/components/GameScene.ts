@@ -457,13 +457,13 @@ export class GameScene extends Phaser.Scene {
     const now = Date.now(); // Current game time for effect expiry
 
     // DEBUG: Log state occasionally
-    if (Math.random() < 0.05) {
-      console.log('[GameScene] State received:', {
-        playerCount: Object.keys(serverPlayers).length,
-        myId: this.myId,
-        sample: Object.values(serverPlayers)[0],
-      });
-    }
+    // if (Math.random() < 0.05) {
+    //   console.log('[GameScene] State received:', {
+    //     playerCount: Object.keys(serverPlayers).length,
+    //     myId: this.myId,
+    //     sample: Object.values(serverPlayers)[0],
+    //   });
+    // }
 
     // Update or create players
     Object.keys(serverPlayers).forEach((id) => {
