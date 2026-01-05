@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # Game Server + Client
+  cheezyio:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: cheezyio-server
+    environment:
+      - PORT=8000
+      - ALLOWED_ORIGIN=http://localhost:8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Redis for scaling adapter (local simulation)
+  redis:
+    image: redis:alpine
+    container_name: cheezyio-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped

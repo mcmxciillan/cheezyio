@@ -3,29 +3,32 @@
   "description": "A simple demo built using SocketCluster and Phaser",
   "version": "2.0.0",
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "bcryptjs": "^2.4.3",
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.3",
+    "compression": "^1.8.1",
     "connect": "3.0.1",
-    "cors": "^2.8.4",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "ejs": "^2.6.1",
-    "express": "4.13.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^8.2.1",
     "lodash": "4.17.3",
     "minimist": "1.1.0",
-    "mongoose": "^5.1.1",
-    "morgan": "1.7.0",
+    "morgan": "^1.7.0",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
+    "phaser": "^3.90.0",
     "rbush": "2.0.1",
+    "redis": "^5.10.0",
     "sat": "0.6.0",
-    "sc-cluster-broker-client": "1.x.x",
-    "sc-codec-min-bin": "2.0.0",
-    "sc-framework-health-check": "1.x.x",
-    "sc-hot-reboot": "1.x.x",
     "serve-static": "1.8.0",
-    "socketcluster": "5.x.x",
-    "socketcluster-client": "5.x.x",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "socket.io-msgpack-parser": "^3.0.2",
     "uuid": "3.0.1"
   },
   "keywords": [
@@ -37,5 +40,35 @@
     "iogrid",
     "iogame"
   ],
-  "readmeFilename": "README.md"
+  "main": "bot-manager.js",
+  "scripts": {
+    "start": "node dist/server.js",
+    "dev:server": "nodemon --exec \"node -r ts-node/register\" src/server.ts",
+    "dev:client": "cd client && pnpm dev",
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"pnpm dev:server\" \"pnpm dev:client\"",
+    "build": "tsc && cd client && pnpm install && pnpm build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcmxciillan/cheezyio.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mcmxciillan/cheezyio/issues"
+  },
+  "homepage": "https://github.com/mcmxciillan/cheezyio#readme",
+  "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/express-rate-limit": "^6.0.2",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^25.0.3",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
 }

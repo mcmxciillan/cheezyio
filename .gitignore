@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+.pnpm-store
+
+# Production Build
+dist/
+.next/
+out/
+build/
+
+# Environment Variables
+.env
+.env*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Agent
+.agent/
+!.agent/workflows/
