@@ -169,6 +169,11 @@ export class GameScene extends Phaser.Scene {
       },
     );
 
+    // Handle Respawn Request (from DeathScreen)
+    this.game.events.on('respawn', () => {
+        this.requestRespawn('normal');
+    });
+
     // Leader Crown
     this.crownText = this.add
       .text(0, 0, '👑', {
@@ -266,7 +271,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnBoostParticles(player: Phaser.GameObjects.Sprite, isBoosting: boolean) {
-    if (isBoosting) {
+    // Check if player has score > 0 (Mass required to boost)
+    const score = (player as any).score || 0;
+    if (isBoosting && score > 0) {
       // Emit behind the player
       // Sprite is rotated -90deg (-PI/2) relative to physics.
       // Physics Forward = rotation + PI/2.
@@ -362,10 +369,10 @@ export class GameScene extends Phaser.Scene {
         );
       }
 
-      // Boosting logic: Spacebar OR Joystick Boost (simulated by outer ring) OR right click
+      // Boosting logic: Spacebar OR Joystick Boost (simulated by outer ring) OR Mouse Click (Left or Right)
       const isBoosting =
         this.cursors.space.isDown ||
-        this.input.activePointer.rightButtonDown() ||
+        this.input.activePointer.isDown || 
         this.joystickBoosting;
 
       // Immediate Client-Side Rotation Update
@@ -399,8 +406,9 @@ export class GameScene extends Phaser.Scene {
 
     // Determine pickup range
     // Magnet only pulls cheese closer, collision is still physical contact.
-    // Use a generous buffer for lag compensation.
-    const pickupRange = playerRadius + 50;
+    // Use a smaller buffer to match Server logic (Server uses Dist < Radius)
+    // Server is strict. If we predict eat at Radius + 50, but Server says no, we lose the cheese visually but get no points.
+    const pickupRange = playerRadius + 10;
 
     Object.keys(this.cheese).forEach((id) => {
       const cheese = this.cheese[id];
@@ -478,6 +486,9 @@ export class GameScene extends Phaser.Scene {
       const pData = serverPlayers[id];
       if (this.players[id]) {
         const playerSprite = this.players[id];
+        // Store score for logic usage
+        (playerSprite as any).score = pData.score || 0;
+        
         // Smooth interpolation of position
         this.tweens.add({
           targets: playerSprite,
