@@ -406,9 +406,8 @@ export class GameScene extends Phaser.Scene {
 
     // Determine pickup range
     // Magnet only pulls cheese closer, collision is still physical contact.
-    // Use a smaller buffer to match Server logic (Server uses Dist < Radius)
-    // Server is strict. If we predict eat at Radius + 50, but Server says no, we lose the cheese visually but get no points.
-    const pickupRange = playerRadius + 10;
+    // Use a generous buffer for lag compensation since we now catch prediction errors via reconciliation.
+    const pickupRange = playerRadius + 50;
 
     Object.keys(this.cheese).forEach((id) => {
       const cheese = this.cheese[id];
@@ -428,7 +427,26 @@ export class GameScene extends Phaser.Scene {
 
         // 3. Hide Sprite (Server will remove it later)
         cheese.setVisible(false);
+        (cheese as any).pendingEat = Date.now(); // Mark as eagerly eaten
       }
+    });
+
+    // Predict PowerUp Collection
+    Object.keys(this.powerups).forEach((id) => {
+        const p = this.powerups[id];
+        if (!p.visible) return;
+        
+        const dx = playerX - p.x;
+        const dy = playerY - p.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist < playerRadius + 30) {
+            // Predict Pickup
+            AudioManager.getInstance().playPop();
+            this.powerupEmitter.explode(20, p.x, p.y);
+            this.cameras.main.shake(200, 0.005);
+            p.setVisible(false);
+        }
     });
   }
 
@@ -594,6 +612,7 @@ export class GameScene extends Phaser.Scene {
         const sprite = this.add.sprite(pData.x, pData.y, `${skin}-front`);
         sprite.setRotation(pData.rotation || 0);
         sprite.setScale(0.375);
+        sprite.setDepth(20); // Ensure players are above background/checkers
         this.players[id] = sprite;
       }
     });
@@ -628,7 +647,30 @@ export class GameScene extends Phaser.Scene {
     Object.keys(serverCheese).forEach((id) => {
       const cData = serverCheese[id];
       if (this.cheese[id]) {
-        // No update needed
+        // Reconciliation: If server says it exists, but we hid it (predicted eat), restore it!
+        // This handles cases where we thought we ate it, but server disagreed (lag/distance).
+        if (!this.cheese[id].visible) {
+             const pendingEat = (this.cheese[id] as any).pendingEat || 0;
+             if (Date.now() - pendingEat > 500) {
+                 // Only restore if it's been hidden for > 500ms (Lag threshold)
+                 // If < 500ms, assume server just hasn't processed the eat yet.
+                 this.cheese[id].setVisible(true);
+                 this.cheese[id].setAlpha(1); // Ensure opacity if faded
+             }
+        }
+        
+        // Update Position (CRITICALLY NEEDED FOR MAGNET)
+        // Lerp for smoothness? Or just hard set. Cheese doesn't move fast usually.
+        // Magnet moves it fast.
+        const cSprite = this.cheese[id];
+        // Only tween if moved significantly to avoid jitter?
+        // Simple tween is best.
+        this.tweens.add({
+            targets: cSprite,
+            x: cData.x,
+            y: cData.y,
+            duration: 100, // Slightly slower than tick (50ms) to smooth it out
+        });
       } else {
         // Map type to texture key, default to 'crumbs' if undefined
         const texture = cData.type || 'crumbs';
@@ -697,8 +739,16 @@ export class GameScene extends Phaser.Scene {
         this.powerupEmitter.explode(20, p.x, p.y);
         this.cameras.main.shake(200, 0.005); // Subtle shake
 
-        // Audio
-        AudioManager.getInstance().playPop();
+        // Audio: ONLY play if local prediction didn't handle it?
+        // Actually, preventing double audio is consistent with cheese logic.
+        // If visible=false, we predicted it (and played audio).
+        // If visible=true, someone else took it (or we missed prediction).
+        // For PowerUps, global sound is confusing ("erroneous sounds").
+        // So ONLY play sound if we missed prediction AND it was close to us?
+        // Or just don't play sound for others. Just particles.
+        
+        // Remove global audio pop here.
+        // AudioManager.getInstance().playPop();
 
         p.destroy();
         delete this.powerups[id];
@@ -890,7 +940,7 @@ export class GameScene extends Phaser.Scene {
       s.y = cy;
       s.setRotation(parent.rotation); // Face same way
       s.setScale(parent.scale); // Same size
-      s.setDepth(parent.depth - 1); // Behind real player
+      s.setDepth(15); // Behind real player (20), but above background (0)
     });
   }
 }
