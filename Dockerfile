@@ -20,14 +20,18 @@ COPY . .
 # Build Server
 RUN pnpm run build
 
+# Prune Dependencies
+RUN pnpm prune --prod
+
 # Stage 2: Runner
 # - Minimal Production Image
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copy production artifacts from builder
+# Copy production artifacts
 COPY --from=builder /app/package.json ./
+# Only production node_modules are copied now
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/client/out ./client/out

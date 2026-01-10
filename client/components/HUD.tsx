@@ -6,6 +6,7 @@ import * as Phaser from 'phaser';
 interface HUDProps {
   game: Phaser.Game | null;
   username: string;
+  onQuit: () => void;
 }
 
 interface KillEntry {
@@ -14,7 +15,7 @@ interface KillEntry {
   victim: string;
 }
 
-export default function HUD({ game, username }: HUDProps) {
+export default function HUD({ game, username, onQuit }: HUDProps) {
   const [score, setScore] = useState(0);
   const [killFeed, setKillFeed] = useState<KillEntry[]>([]);
   const [isMobile, setIsMobile] = useState(false);
@@ -29,10 +30,13 @@ export default function HUD({ game, username }: HUDProps) {
     }
   }, []);
 
+  const [leaderboard, setLeaderboard] = useState<{name: string, score: number}[]>([]);
+
   useEffect(() => {
     if (!game) return;
 
     const onUpdateScore = (newScore: number) => setScore(Math.floor(newScore));
+    const onUpdateLeaderboard = (data: {name: string, score: number}[]) => setLeaderboard(data);
     
     const onPlayerKilled = (data: { killer: string; victim: string }) => {
       const entry = { id: Math.random().toString(), ...data };
@@ -43,10 +47,12 @@ export default function HUD({ game, username }: HUDProps) {
     };
 
     game.events.on('updateScore', onUpdateScore);
+    game.events.on('updateLeaderboard', onUpdateLeaderboard);
     game.events.on('playerKilled', onPlayerKilled);
 
     return () => {
       game.events.off('updateScore', onUpdateScore);
+      game.events.off('updateLeaderboard', onUpdateLeaderboard);
       game.events.off('playerKilled', onPlayerKilled);
     };
   }, [game]);
@@ -69,12 +75,32 @@ export default function HUD({ game, username }: HUDProps) {
     <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-4 mix-blend-difference">
       {/* Top Bar */}
       <div className="flex justify-between items-start w-full">
-         <div className="text-white font-bold text-2xl md:text-4xl drop-shadow-md">
-             {username}: {score}
+         <div className="flex flex-col items-start gap-2">
+             <button 
+                 onClick={() => onQuit()}
+                 className="pointer-events-auto px-4 py-1 bg-red-600/80 hover:bg-red-500 text-white rounded font-bold text-sm transition-colors border-2 border-red-800"
+             >
+                 Exit Game
+             </button>
+             <div className="text-white font-bold text-2xl md:text-4xl drop-shadow-md">
+                 {username}: {score}
+             </div>
          </div>
-         <div className="flex flex-col items-end space-y-1">
+         <div className="flex flex-col items-end space-y-2">
+             {/* Leaderboard */}
+             <div className="bg-black/50 p-2 rounded-lg backdrop-blur-sm mb-2">
+                 <div className="text-yellow-500 font-bold text-xs uppercase mb-1 tracking-wider text-right">Leaderboard</div>
+                 {leaderboard.map((p, i) => (
+                     <div key={i} className={`text-sm flex justify-between w-40 ${p.name === username ? 'text-green-400 font-bold' : 'text-white'}`}>
+                         <span>{i+1}. {p.name.substring(0, 10)}</span>
+                         <span>{Math.floor(p.score)}</span>
+                     </div>
+                 ))}
+             </div>
+
+             {/* Kill Feed */}
              {killFeed.map(k => (
-                 <div key={k.id} className="bg-black/50 text-white px-2 py-1 rounded text-sm md:text-base animate-fade-in-out">
+                 <div key={k.id} className="bg-black/50 text-white px-2 py-1 rounded text-sm md:text-base animate-fade-in-out border-l-2 border-red-500">
                      <span className="text-yellow-400 font-bold">{k.killer}</span>
                      <span className="text-gray-300 mx-1">ate</span>
                      <span className="text-red-400 font-bold">{k.victim}</span>

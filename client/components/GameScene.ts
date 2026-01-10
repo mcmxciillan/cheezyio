@@ -631,6 +631,8 @@ export class GameScene extends Phaser.Scene {
     // Remove disconnected/out-of-view players (Silent Removal for AOI)
     Object.keys(this.players).forEach((id) => {
       if (!serverPlayers[id]) {
+        // Ninja Cleanup
+        this.cleanupClones(id);
 
         this.players[id].destroy();
         delete this.players[id];

@@ -84,7 +84,7 @@ export default function Game({ username, isSpectating, onQuit }: GameProps) {
       {/* UI Overlays */}
       {gameInstance && (
           <>
-             <HUD game={gameInstance} username={username} />
+             <HUD game={gameInstance} username={username} onQuit={onQuit} />
              <DeathScreen game={gameInstance} onQuit={onQuit} />
           </>
       )}
