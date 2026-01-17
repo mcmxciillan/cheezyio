@@ -7,8 +7,7 @@ import parser from 'socket.io-msgpack-parser';
 
 dotenv.config();
 
-import { createClient } from 'redis';
-import { createAdapter } from '@socket.io/redis-adapter';
+
 import rateLimit from 'express-rate-limit';
 import pino from 'pino';
 import client from 'prom-client';
@@ -32,15 +31,13 @@ client.collectDefaultMetrics({ register });
 
 const PORT = process.env.PORT || 8000;
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:3000";
-const REDIS_URL = process.env.REDIS_URL;
+
 
 // Environment Validation
 if (!process.env.ALLOWED_ORIGIN) {
     logger.warn('[Env] ALLOWED_ORIGIN not set, defaulting to http://localhost:3000. Set this in production!');
 }
-if (!process.env.REDIS_URL) {
-    logger.warn('[Env] REDIS_URL not set. Single-node mode only. Set this for scaling.');
-}
+
 
 // Security: Rate Limiting
 // Limit: 100 requests per 15 minutes window
@@ -64,23 +61,7 @@ const io = new Server(server, {
 
 // Setup Redis Adapter for Scalability
 const startServer = async () => {
-    if (REDIS_URL) {
-        logger.info(`[Redis] Connecting to ${REDIS_URL}...`);
-        try {
-            const pubClient = createClient({ url: REDIS_URL });
-            const subClient = pubClient.duplicate();
 
-            await Promise.all([pubClient.connect(), subClient.connect()]);
-
-            io.adapter(createAdapter(pubClient, subClient));
-            logger.info('[Redis] Adapter attached successfully. Multi-node scaling enabled.');
-        } catch (e) {
-            logger.error(e, '[Redis] Connection failed:');
-            // Fallback to memory adapter (default)
-        }
-    } else {
-        logger.info('[Redis] No REDIS_URL found. Running in single-node mode.');
-    }
 
     // setup socket.io logic
     const roomManager = setupSocket(io);
@@ -91,7 +72,7 @@ const startServer = async () => {
         res.json({
             status: 'ok',
             version: process.env.npm_package_version || '2.0.0',
-            redis: !!REDIS_URL,
+
             ...stats
         });
     });

@@ -16,7 +16,7 @@ A high-performance, multiplayer .io style game where you play as a mouse, eat ch
 
 ### Technical Architecture
 
-- **Stateless Scaling**: `RedisAdapter` enables multi-instance scaling on Serverless platforms (Cloud Run).
+- **Single-Node Architecture**: Scalable room-based game logic optimized for efficient single-node deployment.
 - **Binary Networking**: Uses `MsgPack` protocol over Socket.IO for 60FPS updates with minimal bandwidth.
 - **Interest Management**: Optimized security; "Invisible" players are filtered from opponents' data streams.
 - **Observability**: Built-in `/health` endpoint exposes real-time room and player stats.
@@ -24,9 +24,9 @@ A high-performance, multiplayer .io style game where you play as a mouse, eat ch
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 16 (App Router), React 19, Phaser 3.90
-- **Backend**: Node.js, Express, Socket.IO (Redis Adapter + MsgPack)
+- **Backend**: Node.js, Express, Socket.IO (MsgPack Parser)
 - **Language**: TypeScript (Full Stack)
-- **Infrastructure**: Docker, Google Cloud Run, Cloud Build, Redis (Memorystore)
+- **Infrastructure**: Docker, Google Cloud Run, Cloud Build
 
 ## 📦 Run Locally
 
@@ -41,9 +41,9 @@ pnpm dev
 # Backend: http://localhost:8000
 ```
 
-### Option B: Docker Compose (Recommended)
+### Option B: Docker Compose
 
-Simulates production environment with Redis.
+Runs the full stack in a container.
 
 ```bash
 docker-compose up --build
@@ -61,7 +61,7 @@ This project includes a fully automated workflow for deploying to **Google Cloud
 1.  **Infrastructure**: Requires Cloud Run + Memorystore (Redis).
 2.  **Pipeline**: The `cloudbuild.yaml` file handles Building, Pushing, and Deploying.
 3.  **Environment**:
-    - `REDIS_URL`: `redis://[HOST]:6379` (Required for scaling)
+    - `REDIS_URL`: Removed (Single-node only)
     - `ALLOWED_ORIGIN`: Your Cloud Run URL (Required for CORS)
 
 ## 🎮 Controls
@@ -80,6 +80,6 @@ This project includes a fully automated workflow for deploying to **Google Cloud
 - `src/` - Node.js Server
   - `game/RoomManager.ts` - Scaling logic (Route players -> Rooms)
   - `game/GameManager.ts` - Authoritative Game Logic (1 Instance per Room)
-  - `server.ts` - Entry point, Redis setup, Rate Limiting
+  - `server.ts`: Entry point, Rate Limiting
 - `docker-compose.yml` - Local Dev orchestration
 - `cloudbuild.yaml` - CI/CD Pipeline

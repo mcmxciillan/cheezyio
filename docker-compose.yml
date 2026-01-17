@@ -1,36 +1,13 @@
 version: '3.8'
 
 services:
-  redis:
-    image: redis:alpine
-    ports:
-      - '6379:6379'
-    networks:
-      - app-network
-
-  server-1:
+  server:
     build: .
     environment:
       - PORT=8000
-      - REDIS_URL=redis://redis:6379
       - ALLOWED_ORIGIN=http://localhost:3000
     ports:
-      - '8001:8000'
-    depends_on:
-      - redis
-    networks:
-      - app-network
-
-  server-2:
-    build: .
-    environment:
-      - PORT=8000
-      - REDIS_URL=redis://redis:6379
-      - ALLOWED_ORIGIN=http://localhost:3000
-    ports:
-      - '8002:8000'
-    depends_on:
-      - redis
+      - '8000:8000'
     networks:
       - app-network
 
